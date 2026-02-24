@@ -39,7 +39,7 @@ const PersonaModel = (sq) => {
             allowNull: false,
             unique:true
         },
-        email: {
+        correo: {
             type: DataTypes.STRING,
             allowNull: true,
             unique: true,
