@@ -4,15 +4,15 @@ import server from "./src/server.js";
 
 
 
-sq.sync({
-    logging: false,
-    force: false,
-    alter: true
-}).then(() => {
-    console.log("Base de datos conectada")
-    server.listen(PORT,() => {
-        console.log(`Server a la escucha por el puerto: ${PORT}`)
+server.listen(PORT,() => {
+    console.log(`Server a la escucha por el puerto: ${PORT}`)
+    sq.sync({
+        logging: false,
+        force: false,
+        alter: false
+    }).then(() => {
+        console.log("Base de datos conectada")
+    }).catch((err) => {
+        console.log("Error al iniciar la base de datos: ", err.message)
     })
-}).catch((err) => {
-    console.log("Error al iniciar la base de datos: ", err.message)
 })
