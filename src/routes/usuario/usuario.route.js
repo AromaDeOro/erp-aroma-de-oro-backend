@@ -1,9 +1,14 @@
 import { Router } from "express";
 import { usuarioControllers } from "../../controllers/index.controllers.js";
+import { jwtMiddlewares } from "../../middlewares/index.middlewares.js";
 
 const usuarioRouter = Router();
 
-usuarioRouter.get("/todos", usuarioControllers.listarUsuarios);
+usuarioRouter.get(
+  "/todos",
+  jwtMiddlewares.verificarToken,
+  usuarioControllers.listarUsuarios,
+);
 usuarioRouter.get("/buscar-usuario", usuarioControllers.listarUsuarioPorClave);
 
 usuarioRouter.post("/agregar", usuarioControllers.agregarUsuario);

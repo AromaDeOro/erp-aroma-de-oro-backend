@@ -1,3 +1,3 @@
 import bcryptUtils from "./bcrypt/bcrypt.util.js";
-
-export { bcryptUtils };
+import jwtUtils from "./jwt/jwt.util.js";
+export { bcryptUtils, jwtUtils };
