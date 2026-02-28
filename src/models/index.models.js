@@ -10,6 +10,7 @@ import DetalleLiquidacion from "./detalle_liquidacion/detalle_liquidacion.model.
 import CuentasPorPagarModel from "./cuentas_por_pagar/cuentas_por_pagar.js";
 import VentasModel from "./venta/venta.model.js";
 import CuentasPorCobrarModel from "./cuentas_por_cobrar/cuentas_por_cobrar.js";
+import CajaModel from "./caja/caja.model.js";
 
 export const models = [
   EmpresaModel,
@@ -24,4 +25,5 @@ export const models = [
   VentasModel,
   CuentasPorCobrarModel,
   CuentasPorPagarModel,
+  CajaModel,
 ];

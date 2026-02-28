@@ -1,0 +1,40 @@
+import { DataTypes } from "sequelize";
+
+const CajaModel = (sq) => {
+  sq.define("Caja", {
+    id: {
+      type: DataTypes.UUID,
+      primaryKey: true,
+      defaultValue: DataTypes.UUIDV4,
+    },
+
+    fecha: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+
+    tipoMovimiento: {
+      type: DataTypes.ENUM,
+      values: ["Ingreso", "Egreso"],
+      allowNull: false,
+    },
+
+    categoria: {
+      type: DataTypes.ENUM,
+      values: ["Compra", "Venta", "Gasto", "Nomina"],
+      allowNull: false,
+    },
+
+    monto: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+    },
+
+    idReferencia: {
+      type: DataTypes.UUID,
+      allowNull: false,
+    },
+  });
+};
+
+export default CajaModel;
