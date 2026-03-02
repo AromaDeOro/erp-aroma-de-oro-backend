@@ -6,6 +6,7 @@ import productoControllers from "./producto/index.controller.js";
 
 import usuarioControllers from "./usuario/index.controller.js";
 import authControllers from "./auth/auth.controller.js";
+import ticketControllers from "./ticket/index.controller.js";
 
 export {
   authControllers,
@@ -14,4 +15,5 @@ export {
   personaControllers,
   productoControllers,
   usuarioControllers,
+  ticketControllers,
 };
