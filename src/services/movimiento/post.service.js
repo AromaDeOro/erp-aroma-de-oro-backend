@@ -1,7 +1,7 @@
-import { Movimiento, Venta, Nomina, Liquidacion } from "../../libs/db.js";
+import { Movimiento, Venta, Nomina, Liquidacion, Caja } from "../../libs/db.js";
 
 const crearMovimiento = async (data) => {
-  const { categoria, idReferencia } = data;
+  const { categoria, idReferencia, CajaId } = data;
 
   switch (categoria) {
     case "Compra":
@@ -50,8 +50,27 @@ const crearMovimiento = async (data) => {
       break;
   }
 
-  const caja = await Movimiento.create(data);
-  return { code: 201, message: "Movimiento creado", caja };
+  const caja = await Caja.findOne({
+    where: {
+      id: CajaId,
+    },
+  });
+
+  if (!caja)
+    return {
+      code: 400,
+      message: "Error al registrar el movimiento. La caja no existe",
+    };
+
+  if (caja.estado === "Cerrada")
+    return {
+      code: 400,
+      message:
+        "Error al registrar el movimiento. La caja ya se encuentra cerrada",
+    };
+
+  const movimiento = await Movimiento.create(data);
+  return { code: 201, message: "Movimiento creado", movimiento };
 };
 
 export { crearMovimiento };

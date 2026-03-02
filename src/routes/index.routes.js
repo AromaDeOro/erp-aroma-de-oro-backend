@@ -6,6 +6,8 @@ import nominaRouter from "./nomina/nomina.route.js";
 import personaRouter from "./persona/persona.route.js";
 import authRouter from "./auth/auth.route.js";
 import ticketRouter from "./ticket/ticket.route.js";
+import cajaRouter from "./caja/caja.route.js";
+import movimientoRouter from "./movimiento/movimiento.route.js";
 
 const rootRouter = Router();
 
@@ -16,4 +18,6 @@ rootRouter.use("/nominas", nominaRouter);
 rootRouter.use("/personas", personaRouter);
 rootRouter.use("/auth", authRouter);
 rootRouter.use("/tickets", ticketRouter);
+rootRouter.use("/cajas", cajaRouter);
+rootRouter.use("/movimientos", movimientoRouter);
 export default rootRouter;

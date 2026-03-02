@@ -49,3 +49,5 @@ const cerrarCaja = async (id, data) => {
     },
   };
 };
+
+export { cerrarCaja };

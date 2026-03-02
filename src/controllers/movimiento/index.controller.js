@@ -2,12 +2,12 @@ import {
   listarPorCaja,
   listarPorClave,
   listarPorRango,
-} from "./get.service.js";
-import { crearMovimiento } from "./post.service.js";
+} from "./get.controller.js";
+import { crearMovimiento } from "./post.controller.js";
 
 export default {
   crearMovimiento,
   listarPorCaja,
-  listarPorClave,
   listarPorRango,
+  listarPorClave,
 };
