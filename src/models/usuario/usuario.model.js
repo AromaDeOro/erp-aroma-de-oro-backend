@@ -44,6 +44,7 @@ const UsuarioModel = (sq) => {
     },
     {
       timestamps: false,
+      tableName: 'Usuarios',
     }
   )
 }

@@ -1,63 +1,70 @@
-import { DataTypes } from "sequelize";
+import { DataTypes } from 'sequelize'
 
 const TicketModel = (sq) => {
-  sq.define("Ticket", {
-    id: {
-      type: DataTypes.UUID,
-      primaryKey: true,
-      defaultValue: DataTypes.UUIDV4,
-    },
+  sq.define(
+    'Ticket',
+    {
+      id: {
+        type: DataTypes.UUID,
+        primaryKey: true,
+        defaultValue: DataTypes.UUIDV4,
+      },
 
-    numero: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-    },
+      numero: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+      },
 
-    identificacionTemporal: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    placaVehiculo: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
+      identificacionTemporal: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      placaVehiculo: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
 
-    pesoBruto: {
-      type: DataTypes.FLOAT,
-      allowNull: false,
-    },
+      pesoBruto: {
+        type: DataTypes.FLOAT,
+        allowNull: false,
+      },
 
-    taraVehiculo: {
-      type: DataTypes.FLOAT,
-      allowNull: true,
-    },
+      taraVehiculo: {
+        type: DataTypes.FLOAT,
+        allowNull: true,
+      },
 
-    pesoNeto: {
-      type: DataTypes.FLOAT,
-      allowNull: false,
-    },
+      pesoNeto: {
+        type: DataTypes.FLOAT,
+        allowNull: false,
+      },
 
-    fechaIngreso: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
+      fechaIngreso: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
 
-    estadoTicket: {
-      type: DataTypes.ENUM,
-      values: ["Pendiente", "Liquidado"],
-      defaultValue: "Pendiente",
-    },
+      estadoTicket: {
+        type: DataTypes.ENUM,
+        values: ['Pendiente', 'Liquidado'],
+        defaultValue: 'Pendiente',
+      },
 
-    ProductoId: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      references: {
-        model: "Productos",
-        key: "id",
+      ProductoId: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: {
+          model: 'Productos',
+          key: 'id',
+        },
       },
     },
-  });
-};
+    {
+      timestamps: false,
+      tableName: 'Tickets',
+    }
+  )
+}
 
-export default TicketModel;
+export default TicketModel
