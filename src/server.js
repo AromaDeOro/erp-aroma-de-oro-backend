@@ -1,27 +1,44 @@
 import express, { json } from 'express'
-import cors from 'cors'
+import cors from 'cors' // Usaremos el paquete oficial
 import logger from 'morgan'
 import rootRouter from './routes/index.routes.js'
 import cookieParser from 'cookie-parser'
 
 const server = express()
 
-// --- 🔥 CORS robusto y seguro (SOLUCIÓN REAL) ---
-server.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://erp-aroma-de-oro-client.vercel.app')
-  res.header('Access-Control-Allow-Credentials', 'true')
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
+// --- 🌐 Configuración de CORS Profesional ---
+const allowedOrigins = [
+  'https://erp-aroma-de-oro-client.vercel.app',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+]
 
-  // Responder inmediatamente al preflight
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200)
-  }
+server.use(
+  cors({
+    origin: function (origin, callback) {
+      // Permitir peticiones sin origen (como Postman o apps móviles)
+      // o si está en la whitelist
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true)
+      } else {
+        callback(new Error('No permitido por CORS'))
+      }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'x-token',
+      'Accept',
+      'Origin',
+      'X-Requested-With',
+    ],
+    exposedHeaders: ['x-token'], // Para que el frontend pueda leerlo si lo envías en la respuesta
+  })
+)
 
-  next()
-})
-
-// --- Middlewares normales ---
+// --- Middlewares ---
 server.use(json({ limit: '5mb' }))
 server.use(cookieParser())
 server.use(logger('dev'))

@@ -40,6 +40,7 @@ const ProductoModel = (sq) => {
     },
     {
       timestamps: false, // O true si quieres manejar createdAt/updatedAt automáticamente
+      tableName: 'Productos',
     }
   )
 }

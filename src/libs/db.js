@@ -65,6 +65,9 @@ Nomina.belongsTo(Persona, { foreignKey: 'PersonaId' })
 Liquidacion.hasMany(Retencion, { foreignKey: 'LiquidacionId' })
 Retencion.belongsTo(Liquidacion, { foreignKey: 'LiquidacionId' })
 
+Producto.hasMany(Ticket, { foreignKey: 'ProductoId' })
+Ticket.belongsTo(Producto, { foreignKey: 'ProductoId' })
+
 export {
   sq,
   Empresa,

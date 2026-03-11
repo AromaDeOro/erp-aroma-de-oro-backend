@@ -1,7 +1,17 @@
-import { Ticket } from '../../libs/db.js'
+import { Ticket, Producto } from '../../libs/db.js'
 
 const listarTodos = async () => {
-  const tickets = await Ticket.findAll()
+  const tickets = await Ticket.findAll({
+    // Traemos el nombre del producto relacionado
+    include: [
+      {
+        model: Producto,
+        attributes: ['nombre'],
+      },
+    ],
+    // Ordenamos por fecha de ingreso, los más nuevos arriba
+    order: [['fechaIngreso', 'DESC']],
+  })
 
   return {
     code: 200,
@@ -10,11 +20,10 @@ const listarTodos = async () => {
 }
 
 const listarInformacion = async (id) => {
-  const ticket = await Ticket.findOne({
-    where: {
-      id,
-    },
+  const ticket = await Ticket.findByPk(id, {
+    include: [{ model: Producto, attributes: ['nombre'] }],
   })
+
   if (!ticket) return { code: 404, message: 'El ticket no existe.' }
 
   return { code: 200, ticket }
@@ -25,6 +34,8 @@ const listarPorClave = async (clave, valor) => {
     where: {
       [clave]: valor,
     },
+    include: [{ model: Producto, attributes: ['nombre'] }],
+    order: [['fechaIngreso', 'DESC']],
   })
 
   return {
