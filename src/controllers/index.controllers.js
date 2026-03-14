@@ -12,6 +12,7 @@ import movimientoControllers from './movimiento/index.controller.js'
 import cuentasPorCobrarControllers from './cuentas-por-cobrar/index.controller.js'
 import cuentasPorPagarControllers from './cuentas-por-pagar/index.controller.js'
 import liquidacionControllers from './liquidacion/index.controller.js'
+import ventaControllers from './venta/index.controller.js'
 
 export {
   authControllers,
@@ -26,4 +27,5 @@ export {
   cuentasPorCobrarControllers,
   cuentasPorPagarControllers,
   liquidacionControllers,
+  ventaControllers,
 }

@@ -1,17 +1,15 @@
-import { Router } from "express";
-import { movimientoControllers } from "../../controllers/index.controllers.js";
+import { Router } from 'express'
+import { movimientoControllers } from '../../controllers/index.controllers.js'
 
-const movimientoRouter = Router();
+const movimientoRouter = Router()
 
-movimientoRouter.post("/agregar", movimientoControllers.crearMovimiento);
+movimientoRouter.post('/agregar', movimientoControllers.crearMovimiento)
 
-movimientoRouter.get(
-  "/listar/caja/:caja_id",
-  movimientoControllers.listarPorCaja,
-);
+movimientoRouter.get('/listar/caja/:caja_id', movimientoControllers.listarPorCaja)
 
-movimientoRouter.get("/listar/clave", movimientoControllers.listarPorClave);
+movimientoRouter.get('/listar/clave', movimientoControllers.listarPorClave)
 
-movimientoRouter.get("/listar/rango", movimientoControllers.listarPorRango);
+movimientoRouter.get('/listar/rango', movimientoControllers.listarPorRango)
+movimientoRouter.get('/listar/todos', movimientoControllers.listarTodos)
 
-export default movimientoRouter;
+export default movimientoRouter

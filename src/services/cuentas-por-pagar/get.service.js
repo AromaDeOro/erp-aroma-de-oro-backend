@@ -1,7 +1,52 @@
-import { CuentasPorPagar } from '../../libs/db.js'
+import { CuentasPorPagar, Liquidacion, Persona, Ticket, Usuario } from '../../libs/db.js'
 
 const listarTodas = async () => {
-  const cuentasPorPagar = await CuentasPorPagar.findAll()
+  const cuentasPorPagar = await CuentasPorPagar.findAll({
+    include: [
+      {
+        model: Liquidacion,
+        include: [Usuario, Persona, Ticket],
+      },
+    ],
+  })
+  return {
+    code: 200,
+    cuentasPorPagar,
+  }
+}
+
+const listarPendientes = async () => {
+  const cuentasPorPagar = await CuentasPorPagar.findAll({
+    where: {
+      estado: 'Pendiente',
+    },
+    include: [
+      {
+        model: Liquidacion,
+        include: [Usuario, Persona, Ticket],
+      },
+    ],
+  })
+
+  return {
+    code: 200,
+    cuentasPorPagar,
+  }
+}
+
+const listarPagadas = async () => {
+  const cuentasPorPagar = await CuentasPorPagar.findAll({
+    where: {
+      estado: 'Pagado',
+    },
+    include: [
+      {
+        model: Liquidacion,
+        include: [Usuario, Persona, Ticket],
+      },
+    ],
+  })
+
   return {
     code: 200,
     cuentasPorPagar,
@@ -23,4 +68,4 @@ const obtenerInformacion = async (id) => {
   }
 }
 
-export { listarTodas, obtenerInformacion }
+export { listarTodas, obtenerInformacion, listarPendientes, listarPagadas }

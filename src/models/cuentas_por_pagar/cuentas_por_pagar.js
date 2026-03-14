@@ -36,11 +36,6 @@ const CuentasPorPagar = (sq) => {
         defaultValue: DataTypes.NOW,
       },
 
-      fechaLimitePago: {
-        type: DataTypes.DATE,
-        allowNull: true,
-      },
-
       LiquidacionId: {
         type: DataTypes.UUID,
         allowNull: false,

@@ -43,6 +43,12 @@ const CuentasPorCobrar = (sq) => {
         allowNull: true,
       },
 
+      estado: {
+        type: DataTypes.ENUM,
+        values: ['Pendiente', 'Cobrado'],
+        defaultValud: 'Pendiente',
+      },
+
       VentaId: {
         type: DataTypes.UUID,
         allowNull: false,

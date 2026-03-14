@@ -4,6 +4,12 @@ import { jwtMiddlewares } from '../../middlewares/index.middlewares.js'
 
 const liquidacionRouter = Router()
 
+liquidacionRouter.post(
+  '/crear-liquidacion',
+  jwtMiddlewares.verificarToken,
+  liquidacionControllers.registrarLiquidacion
+)
+
 liquidacionRouter.get(
   '/listar/todas',
   jwtMiddlewares.verificarToken,

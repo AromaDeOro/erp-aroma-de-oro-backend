@@ -8,7 +8,7 @@ cajaRouter.post('/abrir-caja', jwtMiddlewares.verificarToken, cajaControllers.ab
 cajaRouter.patch('/cerrar-caja/:id', jwtMiddlewares.verificarToken, cajaControllers.cerrarCaja)
 
 cajaRouter.get('/listar/todas', jwtMiddlewares.verificarToken, cajaControllers.listarTodas)
-cajaRouter.get('/listar/abiertas', cajaControllers.listarAbiertas)
+cajaRouter.get('/obtener-abierta', cajaControllers.obtenerCajaAbierta)
 cajaRouter.get('/listar/cerradas', cajaControllers.listarCerradas)
 cajaRouter.get('/listar/rango', cajaControllers.listarPorRango)
 

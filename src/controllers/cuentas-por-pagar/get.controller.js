@@ -11,6 +11,29 @@ const listarTodas = async (req, res) => {
   }
 }
 
+const listarPendientes = async (req, res) => {
+  try {
+    const { code, cuentasPorPagar } = await cuentasPorPagarService.listarPendientes()
+    res.status(code).json({ cuentasPorPagar })
+  } catch (error) {
+    console.log(error.message)
+    res.status(500).json({
+      message: 'Error interno en el servidor. Intente de nuevo',
+    })
+  }
+}
+
+const listarPagadas = async (req, res) => {
+  try {
+    const { code, cuentasPorPagar } = await cuentasPorPagarService.listarPagadas()
+    res.status(code).json({ cuentasPorPagar })
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error interno en el servidor. Intente de nuevo',
+    })
+  }
+}
+
 const obtenerInformacion = async (req, res) => {
   try {
     const { id } = req.params
@@ -32,4 +55,4 @@ const obtenerInformacion = async (req, res) => {
   }
 }
 
-export { listarTodas, obtenerInformacion }
+export { listarTodas, obtenerInformacion, listarPendientes, listarPagadas }

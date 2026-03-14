@@ -29,6 +29,9 @@ Nomina.belongsTo(Persona, { foreignKey: 'PersonaId' })
 Caja.hasMany(Movimiento, { foreignKey: 'CajaId' })
 Movimiento.belongsTo(Caja, { foreignKey: 'CajaId' })
 
+Usuario.hasMany(Caja, { foreignKey: 'UsuarioId' })
+Caja.belongsTo(Usuario, { foreignKey: 'UsuarioId' })
+
 Persona.hasMany(Venta, { foreignKey: 'CompradorId' })
 Venta.belongsTo(Persona, { foreignKey: 'CompradorId' })
 
@@ -67,6 +70,30 @@ Retencion.belongsTo(Liquidacion, { foreignKey: 'LiquidacionId' })
 
 Producto.hasMany(Ticket, { foreignKey: 'ProductoId' })
 Ticket.belongsTo(Producto, { foreignKey: 'ProductoId' })
+
+Movimiento.belongsTo(Liquidacion, {
+  foreignKey: 'idReferencia',
+  constraints: false,
+  as: 'detalleCompra',
+})
+
+Movimiento.belongsTo(Venta, {
+  foreignKey: 'idReferencia',
+  constraints: false,
+  as: 'detalleVenta',
+})
+
+Movimiento.belongsTo(Nomina, {
+  foreignKey: 'idReferencia',
+  constraints: false,
+  as: 'detalleNomina',
+})
+
+Liquidacion.hasMany(CuentasPorPagar, { foreignKey: 'LiquidacionId' })
+CuentasPorPagar.belongsTo(Liquidacion, { foreignKey: 'LiquidacionId' })
+
+Venta.hasMany(CuentasPorCobrar, { foreignKey: 'VentaId' })
+CuentasPorCobrar.hasMany(Venta, { foreignKey: 'VentaId' })
 
 export {
   sq,

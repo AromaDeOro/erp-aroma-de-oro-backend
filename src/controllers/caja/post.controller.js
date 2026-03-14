@@ -7,6 +7,7 @@ const abrirCaja = async (req, res) => {
 
     res.status(code).json(caja ? { caja, message } : { message })
   } catch (error) {
+    console.log(error.message)
     res.status(500).json({
       message: 'Error interno en el servidor. Intente de nuevo.',
     })

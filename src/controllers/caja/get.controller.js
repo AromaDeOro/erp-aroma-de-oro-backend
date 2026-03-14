@@ -1,9 +1,9 @@
 import { cajaService } from '../../services/index.services.js'
 
-const listarAbiertas = async (req, res) => {
+const obtenerCajaAbierta = async (req, res) => {
   try {
-    const { code, cajas } = await cajaService.listarAbiertas()
-    res.status(code).json({ cajas })
+    const { code, caja } = await cajaService.obtenerCajaAbierta()
+    res.status(code).json({ caja })
   } catch (error) {
     res.status(500).json({
       message: 'Error interno en el servidor. Intente de nuevo.',
@@ -45,4 +45,4 @@ const listarTodas = async (req, res) => {
   }
 }
 
-export { listarAbiertas, listarCerradas, listarPorRango, listarTodas }
+export { obtenerCajaAbierta, listarCerradas, listarPorRango, listarTodas }

@@ -1,7 +1,35 @@
-import { CuentasPorCobrar } from '../../libs/db.js'
+import { CuentasPorCobrar, Venta } from '../../libs/db.js'
 
 const listarTodas = async () => {
-  const cuentasPorCobrar = await CuentasPorCobrar.findAll()
+  const cuentasPorCobrar = await CuentasPorCobrar.findAll({
+    include: [Venta],
+  })
+  return {
+    code: 200,
+    cuentasPorCobrar,
+  }
+}
+
+const listarPendientes = async () => {
+  const cuentasPorCobrar = await CuentasPorCobrar.findAll({
+    where: {
+      estado: 'Pendiente',
+    },
+    include: [Venta],
+  })
+  return {
+    code: 200,
+    cuentasPorCobrar,
+  }
+}
+
+const listarCobradas = async () => {
+  const cuentasPorCobrar = await CuentasPorCobrar.findAll({
+    where: {
+      estado: 'Cobrado',
+    },
+    include: [Venta],
+  })
   return {
     code: 200,
     cuentasPorCobrar,
@@ -23,4 +51,4 @@ const obtenerInformacion = async (id) => {
   }
 }
 
-export { listarTodas, obtenerInformacion }
+export { listarTodas, obtenerInformacion, listarPendientes, listarCobradas }

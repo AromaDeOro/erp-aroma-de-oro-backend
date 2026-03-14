@@ -1,17 +1,17 @@
 import {
-  listarAbiertas,
+  obtenerCajaAbierta,
   listarCerradas,
   listarPorRango,
   listarTodas,
-} from "./get.controller.js";
-import { abrirCaja } from "./post.controller.js";
-import { cerrarCaja } from "./update.controller.js";
+} from './get.controller.js'
+import { abrirCaja } from './post.controller.js'
+import { cerrarCaja } from './update.controller.js'
 
 export default {
   abrirCaja,
-  listarAbiertas,
+  obtenerCajaAbierta,
   listarCerradas,
   listarTodas,
   listarPorRango,
   cerrarCaja,
-};
+}

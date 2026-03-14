@@ -11,6 +11,8 @@ import movimientoRouter from './movimiento/movimiento.route.js'
 import cuentasPorCobrarRouter from './cuentas-por-cobrar/cuentas-por-cobrar.route.js'
 import cuentasPorPagarRouter from './cuentas-por-pagar/cuentas-por-pagar.route.js'
 import liquidacionRouter from './liquidacion/liquidacion.route.js'
+import ventaRouter from './venta/venta.route.js'
+
 const rootRouter = Router()
 
 rootRouter.use('/empresa', empresaRouter)
@@ -25,4 +27,6 @@ rootRouter.use('/movimientos', movimientoRouter)
 rootRouter.use('/cuentas-por-cobrar', cuentasPorCobrarRouter)
 rootRouter.use('/cuentas-por-pagar', cuentasPorPagarRouter)
 rootRouter.use('/liquidaciones', liquidacionRouter)
+rootRouter.use('/ventas', ventaRouter)
+
 export default rootRouter

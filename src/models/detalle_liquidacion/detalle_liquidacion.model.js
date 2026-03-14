@@ -36,11 +36,6 @@ const DetalleLiquidacionModel = (sq) => {
         allowNull: false,
       },
 
-      pesoFinal: {
-        type: DataTypes.FLOAT,
-        allowNull: false,
-      },
-
       precio: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
