@@ -9,71 +9,44 @@ const NominaModel = (sq) => {
         primaryKey: true,
         defaultValue: DataTypes.UUIDV4,
       },
+      // NUEVO: Código secuencial o único para contabilidad (Ej: NOM-0001)
+      codigo: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+      },
       fechaPago: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
       },
-      diasTrabajados: {
-        type: DataTypes.INTEGER,
+      tipoPeriodo: {
+        type: DataTypes.ENUM('Jornal', 'Semanal', 'Quincenal', 'Mensual'),
+        allowNull: false,
+        defaultValue: 'Jornal',
+      },
+      sueldoBase: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+      },
+      unidadesTrabajadas: {
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
         defaultValue: 1,
-        validate: {
-          min: 1,
-        },
       },
-      valorJornal: {
+      subTotal: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+      bono: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0.0 },
+      descuentoGeneral: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0.0 },
+      descuentoPrestamo: {
         type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
-        validate: {
-          min: 0.0,
-        },
-      },
-      subTotal: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
-        validate: {
-          min: 0.0,
-        },
-      },
-
-      bono: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
-        validate: {
-          min: 0.0,
-        },
-      },
-      descuento: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: true,
         defaultValue: 0.0,
-        validate: {
-          min: 0.0,
-        },
       },
-      total: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
-        validate: {
-          min: 0.0,
-        },
-      },
-      PersonaId: {
+      totalPagar: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+      PersonaId: { type: DataTypes.UUID, allowNull: false },
+      UsuarioId: { type: DataTypes.UUID, allowNull: false },
+      PrestamoId: {
         type: DataTypes.UUID,
-        allowNull: false,
-        references: {
-          model: 'Personas',
-          key: 'id',
-        },
-      },
-
-      UsuarioId: {
-        type: DataTypes.UUID,
-        allowNull: false,
-        references: {
-          model: 'Usuarios',
-          key: 'id',
-        },
+        allowNull: true,
+        references: { model: 'Prestamos', key: 'id' },
       },
     },
     {

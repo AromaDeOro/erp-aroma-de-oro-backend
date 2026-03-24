@@ -4,6 +4,7 @@ import { models } from '../models/index.models.js'
 
 const sq = new Sequelize(DATABASE_CONFIG.URI, DATABASE_CONFIG.OPTIONS)
 
+// Inicializar modelos
 models.forEach((model) => model(sq))
 
 const {
@@ -22,19 +23,24 @@ const {
   Venta,
   Caja,
   Reporte,
+  AbonosCuentasPorPagar,
+  AbonosCuentasPorCobrar,
+  Anticipo,
+  LiquidacionAnticipo,
+  Prestamo, // Nuevo modelo
+  Gasto,
 } = sq.models
 
-Persona.hasMany(Nomina, { foreignKey: 'PersonaId' })
-Nomina.belongsTo(Persona, { foreignKey: 'PersonaId' })
-
+// --- RELACIONES DE CAJA Y MOVIMIENTOS ---
 Caja.hasMany(Movimiento, { foreignKey: 'CajaId' })
 Movimiento.belongsTo(Caja, { foreignKey: 'CajaId' })
 
 Usuario.hasMany(Caja, { foreignKey: 'UsuarioId' })
 Caja.belongsTo(Usuario, { foreignKey: 'UsuarioId' })
 
-Persona.hasMany(Venta, { foreignKey: 'CompradorId' })
-Venta.belongsTo(Persona, { foreignKey: 'CompradorId' })
+// --- RELACIONES DE VENTAS ---
+Persona.hasMany(Venta, { foreignKey: 'PersonaId' })
+Venta.belongsTo(Persona, { foreignKey: 'PersonaId' })
 
 Producto.hasMany(Venta, { foreignKey: 'ProductoId' })
 Venta.belongsTo(Producto, { foreignKey: 'ProductoId' })
@@ -45,14 +51,12 @@ Venta.belongsTo(Usuario, { foreignKey: 'UsuarioId' })
 Venta.hasMany(CuentasPorCobrar, { foreignKey: 'VentaId' })
 CuentasPorCobrar.belongsTo(Venta, { foreignKey: 'VentaId' })
 
+// --- RELACIONES DE LIQUIDACIÓN ---
 Usuario.hasMany(Liquidacion, { foreignKey: 'UsuarioId' })
 Liquidacion.belongsTo(Usuario, { foreignKey: 'UsuarioId' })
 
 Persona.hasMany(Liquidacion, { foreignKey: 'ProductorId' })
 Liquidacion.belongsTo(Persona, { foreignKey: 'ProductorId' })
-
-// Ticket.hasMany(Liquidacion, { foreignKey: 'TicketId' })
-// Liquidacion.belongsTo(Ticket, { foreignKey: 'TicketId' })
 
 Liquidacion.hasOne(DetalleLiquidacion, { foreignKey: 'LiquidacionId' })
 DetalleLiquidacion.belongsTo(Liquidacion, { foreignKey: 'LiquidacionId' })
@@ -60,20 +64,38 @@ DetalleLiquidacion.belongsTo(Liquidacion, { foreignKey: 'LiquidacionId' })
 Producto.hasMany(DetalleLiquidacion, { foreignKey: 'ProductoId' })
 DetalleLiquidacion.belongsTo(Producto, { foreignKey: 'ProductoId' })
 
-Caja.hasMany(Movimiento, { foreignKey: 'CajaId' })
-Movimiento.belongsTo(Caja, { foreignKey: 'CajaId' })
-
-Persona.hasMany(Nomina, { foreignKey: 'PersonaId' })
-Nomina.belongsTo(Persona, { foreignKey: 'PersonaId' })
-Usuario.hasMany(Nomina, { foreignKey: 'UsuarioId' })
-Nomina.belongsTo(Usuario, { foreignKey: 'UsuarioId' })
-
 Liquidacion.hasMany(Retencion, { foreignKey: 'LiquidacionId' })
 Retencion.belongsTo(Liquidacion, { foreignKey: 'LiquidacionId' })
 
+Liquidacion.hasMany(CuentasPorPagar, { foreignKey: 'LiquidacionId' })
+CuentasPorPagar.belongsTo(Liquidacion, { foreignKey: 'LiquidacionId' })
+
+// --- RELACIONES DE NÓMINA Y PERSONAS ---
+Persona.hasMany(Nomina, { foreignKey: 'PersonaId' })
+Nomina.belongsTo(Persona, { foreignKey: 'PersonaId' })
+
+Usuario.hasMany(Nomina, { foreignKey: 'UsuarioId' })
+Nomina.belongsTo(Usuario, { foreignKey: 'UsuarioId' })
+
+// --- RELACIONES DE PRÉSTAMOS (NUEVO) ---
+Persona.hasMany(Prestamo, { foreignKey: 'PersonaId' })
+Prestamo.belongsTo(Persona, { foreignKey: 'PersonaId' })
+
+Usuario.hasMany(Prestamo, { foreignKey: 'UsuarioId' })
+Prestamo.belongsTo(Usuario, { foreignKey: 'UsuarioId' })
+
+Caja.hasMany(Prestamo, { foreignKey: 'CajaId' })
+Prestamo.belongsTo(Caja, { foreignKey: 'CajaId' })
+
+// Un préstamo puede ser pagado a través de varias nóminas (descuentos)
+Prestamo.hasMany(Nomina, { foreignKey: 'PrestamoId' })
+Nomina.belongsTo(Prestamo, { foreignKey: 'PrestamoId' })
+
+// --- RELACIONES DE TICKETS ---
 Producto.hasMany(Ticket, { foreignKey: 'ProductoId' })
 Ticket.belongsTo(Producto, { foreignKey: 'ProductoId' })
 
+// --- POLIMORFISMO DE MOVIMIENTOS (idReferencia) ---
 Movimiento.belongsTo(Liquidacion, {
   foreignKey: 'idReferencia',
   constraints: false,
@@ -92,14 +114,92 @@ Movimiento.belongsTo(Nomina, {
   as: 'detalleNomina',
 })
 
-Liquidacion.hasMany(CuentasPorPagar, { foreignKey: 'LiquidacionId' })
-CuentasPorPagar.belongsTo(Liquidacion, { foreignKey: 'LiquidacionId' })
+Movimiento.belongsTo(Prestamo, {
+  foreignKey: 'idReferencia',
+  constraints: false,
+  as: 'detallePrestamo',
+})
 
+Movimiento.belongsTo(Gasto, {
+  foreignKey: 'idReferencia',
+  constraints: false,
+  as: 'detalleGasto',
+})
+
+// --- CUENTAS POR COBRAR / PAGAR ---
 Venta.hasMany(CuentasPorCobrar, { foreignKey: 'VentaId' })
-CuentasPorCobrar.hasMany(Venta, { foreignKey: 'VentaId' })
+CuentasPorCobrar.belongsTo(Venta, { foreignKey: 'VentaId' })
+
+CuentasPorCobrar.hasMany(AbonosCuentasPorCobrar, { foreignKey: 'CuentasPorCobrarId' })
+AbonosCuentasPorCobrar.belongsTo(CuentasPorCobrar, { foreignKey: 'CuentasPorCobrarId' })
+
+CuentasPorPagar.hasMany(AbonosCuentasPorPagar, { foreignKey: 'CuentasPorPagarId' })
+AbonosCuentasPorPagar.belongsTo(CuentasPorPagar, { foreignKey: 'CuentasPorPagarId' })
+
+Usuario.hasMany(AbonosCuentasPorCobrar, { foreignKey: 'UsuarioId' })
+AbonosCuentasPorCobrar.belongsTo(Usuario, { foreignKey: 'UsuarioId' })
+
+Usuario.hasMany(AbonosCuentasPorPagar, { foreignKey: 'UsuarioId' })
+AbonosCuentasPorPagar.belongsTo(Usuario, { foreignKey: 'UsuarioId' })
 
 Usuario.hasMany(Reporte, { foreignKey: 'UsuarioId' })
 Reporte.belongsTo(Usuario, { foreignKey: 'UsuarioId' })
+
+// --- RELACIONES DE ANTICIPOS ---
+Persona.hasMany(Anticipo, { foreignKey: 'PersonaId' })
+Anticipo.belongsTo(Persona, { foreignKey: 'PersonaId' })
+
+Caja.hasMany(Anticipo, { foreignKey: 'CajaId' })
+Anticipo.belongsTo(Caja, { foreignKey: 'CajaId' })
+
+Usuario.hasMany(Anticipo, { foreignKey: 'UsuarioId' })
+Anticipo.belongsTo(Usuario, { foreignKey: 'UsuarioId' })
+
+Liquidacion.belongsToMany(Anticipo, {
+  through: LiquidacionAnticipo,
+  foreignKey: 'LiquidacionId',
+})
+
+Anticipo.belongsToMany(Liquidacion, {
+  through: LiquidacionAnticipo,
+  foreignKey: 'AnticipoId',
+})
+
+Liquidacion.hasMany(LiquidacionAnticipo, { foreignKey: 'LiquidacionId' })
+Anticipo.hasMany(LiquidacionAnticipo, { foreignKey: 'AnticipoId' })
+
+Anticipo.hasOne(CuentasPorCobrar, {
+  foreignKey: 'referenciaId',
+  constraints: false,
+  scope: { origen: 'Anticipo' },
+})
+
+CuentasPorCobrar.belongsTo(Anticipo, {
+  foreignKey: 'referenciaId',
+  constraints: false,
+})
+CuentasPorCobrar.belongsTo(Prestamo, {
+  foreignKey: 'referenciaId',
+  constraints: false,
+})
+CuentasPorCobrar.belongsTo(Venta, {
+  foreignKey: 'referenciaId',
+  constraints: false,
+})
+
+Movimiento.belongsTo(Anticipo, {
+  foreignKey: 'idReferencia',
+  constraints: false,
+})
+
+Caja.hasMany(Gasto, { foreignKey: 'CajaId' })
+Gasto.belongsTo(Caja, { foreignKey: 'CajaId' })
+
+Usuario.hasMany(Gasto, { foreignKey: 'UsuarioId' })
+Gasto.belongsTo(Usuario, { foreignKey: 'UsuarioId' })
+
+Caja.hasMany(Venta, { foreignKey: 'CajaId' })
+Venta.belongsTo(Caja, { foreignKey: 'CajaId' })
 
 export {
   sq,
@@ -118,4 +218,10 @@ export {
   Venta,
   Caja,
   Reporte,
+  AbonosCuentasPorCobrar,
+  AbonosCuentasPorPagar,
+  Anticipo,
+  LiquidacionAnticipo,
+  Prestamo,
+  Gasto,
 }

@@ -7,5 +7,9 @@ const nominaRouter = Router()
 nominaRouter.get('/listar-todos', jwtMiddlewares.verificarToken, nominaControllers.listarPagos)
 
 nominaRouter.get('/listar/empleado/:persona_id', nominaControllers.listarPagosPorEmpleado)
-nominaRouter.post('/pagar-jornal', jwtMiddlewares.verificarToken, nominaControllers.pagarJornal)
+nominaRouter.post(
+  '/pagar-jornal',
+  jwtMiddlewares.verificarToken,
+  nominaControllers.procesarPagoNomina
+)
 export default nominaRouter

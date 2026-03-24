@@ -1,105 +1,164 @@
-import { Venta, Producto, Persona, Usuario, Caja, Movimiento, sq } from '../../libs/db.js'
+import {
+  Venta,
+  Producto,
+  Persona,
+  Usuario,
+  Caja,
+  Movimiento,
+  CuentasPorCobrar,
+  sq,
+} from '../../libs/db.js'
 
 /**
- * Función de utilidad para normalizar unidades (Misma lógica que en compras)
+ * FUNCIÓN DE CONVERSIÓN UNIVERSAL (Se mantiene igual)
  */
-const convertirAQuintales = (cantidad, unidadOrigen) => {
-  const cant = parseFloat(cantidad)
+const convertirUnidades = (cantidad, unidadOrigen, unidadDestino) => {
+  const valor = parseFloat(cantidad) || 0
+  if (unidadOrigen === unidadDestino) return valor
+
+  let libras = 0
   switch (unidadOrigen) {
-    case 'Kilogramos':
-      return cant / 45.36
     case 'Libras':
-      return cant / 100
+      libras = valor
+      break
     case 'Quintales':
-      return cant
+      libras = valor * 100
+      break
+    case 'Kilogramos':
+      libras = valor * 2.20462
+      break
+    case 'Arroba':
+      libras = valor * 25
+      break
     default:
-      return cant
+      libras = valor
+  }
+
+  switch (unidadDestino) {
+    case 'Libras':
+      return libras
+    case 'Quintales':
+      return libras / 100
+    case 'Kilogramos':
+      return libras / 2.20462
+    case 'Arroba':
+      return libras / 25
+    default:
+      return libras
   }
 }
 
 const registrarVenta = async (data) => {
-  const { venta, CajaId } = data
-  const { CompradorId, UsuarioId, ProductoId, cantidadQuintales, unidadVenta } = venta
-
-  // 1. Validaciones iniciales
-  const [comprador, usuario, producto, caja] = await Promise.all([
-    Persona.findOne({ where: { id: CompradorId } }),
-    Usuario.findOne({ where: { id: UsuarioId } }),
-    Producto.findOne({ where: { id: ProductoId } }),
-    CajaId ? Caja.findOne({ where: { id: CajaId } }) : null,
-  ])
-
-  if (!comprador) return { code: 400, message: 'El comprador (cliente) no existe.' }
-  if (!usuario) return { code: 400, message: 'Usuario (vendedor) no encontrado.' }
-  if (!producto) return { code: 400, message: 'El producto no existe en el catálogo.' }
-  if (!caja) return { code: 400, message: 'Debe existir una caja activa para procesar la venta.' }
-  if (caja.estado !== 'Abierta') return { code: 400, message: 'La caja está cerrada.' }
-
-  // 2. Validar Stock antes de iniciar la transacción
-  const cantidadNormalizada = convertirAQuintales(cantidadQuintales, unidadVenta || 'Quintales')
-  if (parseFloat(producto.stock) < cantidadNormalizada) {
-    return {
-      code: 400,
-      message: `Stock insuficiente. Disponible: ${producto.stock} QQ. Intenta vender: ${cantidadNormalizada.toFixed(2)} QQ.`,
-    }
-  }
-
   const t = await sq.transaction()
 
   try {
-    // 3. Crear el registro de la Venta
+    const { venta, CajaId } = data
+    const {
+      PersonaId,
+      UsuarioId,
+      ProductoId,
+      cantidadBruta,
+      unidad,
+      montoAbonado, // Dinero físico que entra HOY a caja
+      montoAnticipo, // Dinero que ya se tenía (Préstamo previo)
+      totalFactura, // Valor total de la mercadería (Neto * Precio)
+      tipoVenta,
+    } = venta
+
+    // 1. Validaciones de existencia
+    const [comprador, usuario, producto, caja] = await Promise.all([
+      Persona.findByPk(PersonaId),
+      Usuario.findByPk(UsuarioId),
+      Producto.findByPk(ProductoId),
+      Caja.findOne({ where: { id: CajaId, estado: 'Abierta' } }),
+    ])
+
+    if (!comprador) throw new Error('El cliente no existe.')
+    if (!producto) throw new Error('El producto no existe.')
+    if (!caja) throw new Error('No hay una caja abierta para procesar el ingreso.')
+
+    // 2. Validación de Stock
+    const stockARetirar = convertirUnidades(cantidadBruta, unidad, producto.unidadMedida)
+
+    if (parseFloat(producto.stock) < stockARetirar) {
+      throw new Error(
+        `Stock insuficiente. Disponible: ${producto.stock} ${producto.unidadMedida}. Requiere: ${stockARetirar.toFixed(2)}`
+      )
+    }
+
+    // 3. Generar Código Correlativo
+    const ultimaVenta = await Venta.count()
+    const codigoVenta = `VNT-${(ultimaVenta + 1).toString().padStart(7, '0')}`
+
+    // --- LÓGICA FINANCIERA CORREGIDA ---
+    const total = parseFloat(totalFactura)
+    const anticipo = parseFloat(montoAnticipo || 0)
+    const abonadoHoy = parseFloat(montoAbonado || 0)
+
+    // Lo pendiente es el Total menos lo que ya dio (Anticipo) menos lo que da hoy (Abono)
+    const pendiente = total - anticipo - abonadoHoy
+
+    // 4. CREAR EL REGISTRO DE VENTA
     const nuevaVenta = await Venta.create(
       {
         ...venta,
-        // Forzamos que el montoPendiente sea la resta si no viene calculado
-        montoPendiente: parseFloat(venta.totalFactura) - parseFloat(venta.montoAbonado),
+        codigoVenta,
+        montoAnticipo: anticipo,
+        montoAbonado: abonadoHoy,
+        montoPendiente: pendiente,
+        CajaId: caja.id,
       },
       { transaction: t }
     )
 
-    // 4. DESCONTAR del Inventario
-    await producto.update(
-      { stock: parseFloat(producto.stock) - cantidadNormalizada },
-      { transaction: t }
-    )
+    // 5. ACTUALIZAR STOCK
+    await producto.decrement('stock', { by: stockARetirar, transaction: t })
 
-    // 5. Movimiento de Caja e Ingreso de dinero
-    const montoEfectivoIngresado = parseFloat(venta.montoAbonado)
-    if (montoEfectivoIngresado > 0) {
-      // Registrar el ingreso en la tabla Movimientos
+    // 6. FLUJO DE DINERO EN CAJA (Solo lo que entra HOY)
+    // El anticipo NO genera movimiento de caja porque el dinero ya entró antes o fue un préstamo.
+    if (abonadoHoy > 0) {
       await Movimiento.create(
         {
           tipoMovimiento: 'Ingreso',
           categoria: 'Venta',
-          monto: montoEfectivoIngresado,
+          monto: abonadoHoy,
+          descripcion: `ABONO HOY VENTA ${codigoVenta} | ANTICIPO PREVIO: $${anticipo}`,
           idReferencia: nuevaVenta.id,
-          CajaId: CajaId,
+          CajaId: caja.id,
         },
         { transaction: t }
       )
 
-      // Actualizar el monto esperado de la caja (SUMAR el ingreso)
-      await caja.update(
-        { montoEsperado: parseFloat(caja.montoEsperado) + montoEfectivoIngresado },
+      await caja.increment('saldoActual', { by: abonadoHoy, transaction: t })
+    }
+
+    // 7. CUENTA POR COBRAR (Refleja la deuda real)
+    if (pendiente > 0 || tipoVenta === 'Crédito') {
+      await CuentasPorCobrar.create(
+        {
+          PersonaId: comprador.id,
+          montoTotal: total,
+          montoEfectivo: abonadoHoy + anticipo, // El cliente "cubrió" esta parte del total
+          montoPorCobrar: pendiente,
+          estado: pendiente <= 0 ? 'Pagado' : 'Pendiente',
+          origen: 'Venta',
+          referenciaId: nuevaVenta.id,
+          fecha: new Date(),
+        },
         { transaction: t }
       )
     }
 
     await t.commit()
-
     return {
       code: 201,
-      message: 'Venta realizada con éxito y stock actualizado.',
-      id: nuevaVenta.id,
+      message: 'Venta registrada con éxito.',
+      data: nuevaVenta,
     }
   } catch (error) {
-    await t.rollback()
-    console.error('Error en registrarVenta:', error)
-    return {
-      code: 500,
-      message: 'No se pudo procesar la venta.',
-      error: error.message,
-    }
+    console.error('ERROR_VENTA_AROMA_ORO:', error.message)
+    if (t) await t.rollback()
+    return { code: 400, message: error.message }
   }
 }
 

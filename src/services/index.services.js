@@ -13,6 +13,11 @@ import cuentasPorCobrarService from './cuentas-por-cobrar/index.service.js'
 import cuentasPorPagarService from './cuentas-por-pagar/index.service.js'
 import ventaService from './venta/index.service.js'
 import reporteService from './reporte/index.service.js'
+import abonoPorPagarService from './abonos-por-pagar/index.service.js'
+import anticipoService from './anticipo/index.service.js'
+import prestamoService from './prestamo/index.service.js'
+import gastoService from './gasto/index.service.js'
+import abonosPorCobrarService from './abonos-por-cobrar/index.service.js'
 
 export {
   authService,
@@ -29,4 +34,9 @@ export {
   cuentasPorPagarService,
   ventaService,
   reporteService,
+  abonoPorPagarService,
+  anticipoService,
+  prestamoService,
+  gastoService,
+  abonosPorCobrarService,
 }

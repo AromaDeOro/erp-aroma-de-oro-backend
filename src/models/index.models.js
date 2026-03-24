@@ -13,6 +13,12 @@ import CuentasPorCobrarModel from './cuentas_por_cobrar/cuentas_por_cobrar.js'
 import MovimientoModel from './movimiento/movimiento.model.js'
 import CajaModel from './caja/caja.model.js'
 import ReporteModel from './reporte/reporte.model.js'
+import AbonosCuentasPorCobrar from './abonos_por_cobrar/AbonosPorCobrar.model.js'
+import AbonosCuentasPorPagar from './abonos_por_pagar/AbonosPorPagar.model.js'
+import AnticipoModel from './anticipo/anticipo.model.js'
+import LiquidacionAnticipoModel from './liquidacionAnticipo/LiquidacionAnticipo.model.js'
+import PrestamoModel from './prestamo/prestamo.model.js'
+import GastoModel from './gasto/gasto.model.js'
 export const models = [
   EmpresaModel,
   PersonaModel,
@@ -29,4 +35,10 @@ export const models = [
   MovimientoModel,
   CajaModel,
   ReporteModel,
+  AbonosCuentasPorCobrar,
+  AbonosCuentasPorPagar,
+  AnticipoModel,
+  LiquidacionAnticipoModel,
+  PrestamoModel,
+  GastoModel,
 ]

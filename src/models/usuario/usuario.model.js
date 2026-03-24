@@ -1,4 +1,4 @@
-import { DataTypes, Sequelize } from 'sequelize'
+import { DataTypes } from 'sequelize'
 
 const UsuarioModel = (sq) => {
   sq.define(
@@ -32,18 +32,19 @@ const UsuarioModel = (sq) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      esAdministrador: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
+      // CAMBIO AQUÍ: De Boolean a ENUM
+      rol: {
+        type: DataTypes.ENUM,
+        values: ['Administrador', 'Contador', 'Estandar'],
+        defaultValue: 'Estandar',
       },
-
       estaActivo: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
       },
     },
     {
-      timestamps: false,
+      timestamps: true,
       tableName: 'Usuarios',
     }
   )

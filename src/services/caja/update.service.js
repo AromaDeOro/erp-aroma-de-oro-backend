@@ -1,4 +1,4 @@
-import { Caja, Movimiento } from '../../libs/db.js'
+import { Caja, Movimiento, sq } from '../../libs/db.js'
 
 const cerrarCaja = async (id, data) => {
   const caja = await Caja.findByPk(id)
@@ -11,40 +11,55 @@ const cerrarCaja = async (id, data) => {
       where: { CajaId: id },
     })
 
-    let ingresos = 0
-    let egresos = 0
-    let sumaInyeccionesBancos = 0 // <-- Nueva variable para tu campo totalInyecciones
+    let ingresosFisicos = 0
+    let egresosFisicos = 0
+    let sumaInyeccionesBancos = 0
+    let movimientosVirtuales = 0 // Bancos/Cheques (No afectan el efectivo)
 
     movimientos.forEach((m) => {
       const valor = parseFloat(m.monto)
+      const desc = m.descripcion?.toUpperCase() || ''
+
+      // DETERMINAMOS SI ES UN MOVIMIENTO QUE AFECTA EL DINERO FÍSICO
+      const esVirtual =
+        desc.includes('BANCO') || desc.includes('CHEQUE') || desc.includes('TRANSFERENCIA')
 
       if (m.tipoMovimiento === 'Ingreso') {
-        ingresos += valor
-
-        // Verificamos si es categoría 'Bancos' para llenar el campo especial
-        if (m.categoria === 'Bancos') {
-          sumaInyeccionesBancos += valor
+        if (!esVirtual) {
+          ingresosFisicos += valor
+        } else {
+          movimientosVirtuales += valor
+          if (m.categoria === 'Bancos') {
+            sumaInyeccionesBancos += valor
+          }
         }
       } else if (m.tipoMovimiento === 'Egreso') {
-        egresos += valor
+        if (!esVirtual) {
+          egresosFisicos += valor
+        } else {
+          // Si es un egreso por BANCO (como tus $2,000), no resta del físico
+          movimientosVirtuales -= valor
+        }
       }
     })
 
-    const saldoSistema = parseFloat(caja.montoApertura) + ingresos - egresos
-    const montoContado = parseFloat(data.montoCierre)
-    const diferenciaArqueo = montoContado - saldoSistema
+    // CÁLCULO REAL PARA EL ARQUEO DE AROMA DE ORO
+    // Saldo Sistema = Apertura + Lo que entró en billetes - Lo que salió en billetes
+    const saldoSistemaFisico = parseFloat(caja.montoApertura) + ingresosFisicos - egresosFisicos
 
-    // AQUÍ ACTUALIZAMOS TODOS LOS CAMPOS DE TU MODELO
+    const montoContado = parseFloat(data.montoCierre)
+    const diferenciaArqueo = montoContado - saldoSistemaFisico
+
+    // ACTUALIZACIÓN DEL MODELO EN DB
     await caja.update({
       fechaCierre: new Date(),
-      montoEsperado: saldoSistema,
-      totalInyecciones: sumaInyeccionesBancos, // <-- AHORA SÍ LO GUARDAMOS
+      montoEsperado: saldoSistemaFisico, // Ahora guardará $4,700
+      totalInyecciones: sumaInyeccionesBancos,
       montoCierre: montoContado,
       diferencia: diferenciaArqueo,
       estado: 'Cerrada',
       observaciones:
-        data.observaciones ||
-        `Cierre procesado. Diferencia detectada: $${diferenciaArqueo.toFixed(2)}`,
+        data.observaciones || `Cierre Aroma de Oro. Diferencia: $${diferenciaArqueo.toFixed(2)}`,
     })
 
     return {
@@ -52,10 +67,10 @@ const cerrarCaja = async (id, data) => {
       message: 'Caja cerrada y arqueada con éxito',
       resumen: {
         apertura: parseFloat(caja.montoApertura),
-        totalIngresos: ingresos,
-        totalInyeccionesBancos: sumaInyeccionesBancos, // Lo incluimos en el resumen para el frontend
-        totalEgresos: egresos,
-        esperado: saldoSistema,
+        totalIngresosEfectivo: ingresosFisicos,
+        totalEgresosEfectivo: egresosFisicos,
+        operacionesBancarias: movimientosVirtuales,
+        esperado: saldoSistemaFisico,
         contado: montoContado,
         diferencia: diferenciaArqueo,
       },
@@ -65,7 +80,6 @@ const cerrarCaja = async (id, data) => {
     return { code: 500, message: 'Error interno al procesar el cierre' }
   }
 }
-
 const registrarInyeccionBanco = async (data) => {
   const { monto, descripcion, CajaId } = data
 

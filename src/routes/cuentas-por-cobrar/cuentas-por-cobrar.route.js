@@ -26,4 +26,10 @@ cuentasPorCobrarRouter.get(
   cuentasPorCobrarControllers.obtenerInformacion
 )
 
+cuentasPorCobrarRouter.patch(
+  '/registrar-cobro',
+  jwtMiddlewares.verificarToken,
+  cuentasPorCobrarControllers.registrarCobro
+)
+
 export default cuentasPorCobrarRouter

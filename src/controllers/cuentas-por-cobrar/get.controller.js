@@ -8,6 +8,7 @@ const listarTodas = async (req, res) => {
       cuentasPorCobrar,
     })
   } catch (error) {
+    console.log(error.message)
     res.status(500).json({
       message: 'Error interno en el servidor. Intente de nuevo.',
     })

@@ -6,8 +6,8 @@ const CuentasPorCobrar = (sq) => {
     {
       id: {
         type: DataTypes.UUID,
-        allowNull: false,
         primaryKey: true,
+        defaultValue: DataTypes.UUIDV4,
       },
 
       montoTotal: {
@@ -38,10 +38,6 @@ const CuentasPorCobrar = (sq) => {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
       },
-      fechaLimite: {
-        type: DataTypes.DATE,
-        allowNull: true,
-      },
 
       estado: {
         type: DataTypes.ENUM,
@@ -49,13 +45,15 @@ const CuentasPorCobrar = (sq) => {
         defaultValud: 'Pendiente',
       },
 
-      VentaId: {
-        type: DataTypes.UUID,
+      origen: {
+        type: DataTypes.ENUM('Venta', 'Anticipo', 'Préstamo'),
         allowNull: false,
-        references: {
-          model: 'Ventas',
-          key: 'id',
-        },
+        defaultValue: 'Venta',
+      },
+
+      referenciaId: {
+        type: DataTypes.UUID,
+        allowNull: true,
       },
     },
     {

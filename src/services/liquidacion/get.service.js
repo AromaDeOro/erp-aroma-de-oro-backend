@@ -1,4 +1,5 @@
 import {
+  Anticipo,
   DetalleLiquidacion,
   Liquidacion,
   Persona,
@@ -10,13 +11,31 @@ import {
 const listarTodas = async () => {
   const liquidaciones = await Liquidacion.findAll({
     include: [
-      Persona,
+      {
+        model: Persona,
+        attributes: ['id', 'nombreCompleto', 'numeroIdentificacion', 'telefono', 'direccion'],
+      },
       {
         model: DetalleLiquidacion,
-        include: [Producto],
+        include: [{ model: Producto, attributes: ['nombre'] }],
       },
-      Retencion,
+      {
+        model: Retencion,
+      },
+      {
+        // AQUÍ ESTÁ EL TRUCO: Incluimos la tabla intermedia y el modelo Anticipo
+        model: Anticipo,
+        through: {
+          attributes: ['montoAplicado'], // Traemos cuánto se usó de ese anticipo específico
+        },
+        include: [
+          {
+            model: Usuario,
+          },
+        ],
+      },
     ],
+    order: [['createdAt', 'DESC']],
   })
 
   return { code: 200, liquidaciones }

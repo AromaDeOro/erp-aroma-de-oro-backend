@@ -4,10 +4,12 @@ import {
   listarTodas,
   obtenerInformacion,
 } from './get.controller.js'
+import { registrarCobro } from './update.controller.js'
 
 export default {
   listarTodas,
   listarPendientes,
   listarCobradas,
   obtenerInformacion,
+  registrarCobro,
 }

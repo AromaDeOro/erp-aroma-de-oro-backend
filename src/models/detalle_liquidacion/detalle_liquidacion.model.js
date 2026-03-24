@@ -15,14 +15,11 @@ const DetalleLiquidacionModel = (sq) => {
         allowNull: false,
       },
 
+      // Ahora 'calificacion' sustituye a la lógica de humedad/calidad
       calificacion: {
-        type: DataTypes.STRING, // Cambiado a STRING por si usan letras (A, B, C) o números
-        allowNull: true,
-      },
-
-      porcentajeIVa: {
         type: DataTypes.FLOAT,
-        allowNull: true,
+        defaultValue: 0.0,
+        comment: 'Porcentaje o grado de calidad que afecta el peso (antes humedad)',
       },
 
       unidad: {
@@ -31,16 +28,10 @@ const DetalleLiquidacionModel = (sq) => {
         values: ['Quintales', 'Kilogramos', 'Libras', 'Unidades'],
       },
 
-      // Peso que llega originalmente en la báscula (Peso Bruto)
+      // Peso Bruto (Báscula)
       cantidad: {
         type: DataTypes.FLOAT,
         allowNull: false,
-      },
-
-      // --- CAMPOS DE CALIDAD ---
-      humedad: {
-        type: DataTypes.FLOAT,
-        defaultValue: 0.0,
       },
 
       impurezas: {
@@ -48,29 +39,24 @@ const DetalleLiquidacionModel = (sq) => {
         defaultValue: 0.0,
       },
 
-      // Cuántas unidades (ej: kilos) se restaron por humedad/impurezas
+      // Cuántas unidades se restan del peso bruto
       descuentoMerma: {
         type: DataTypes.FLOAT,
         defaultValue: 0.0,
       },
 
-      // Cantidad final que se multiplica por el precio (Peso Neto)
+      // Peso Neto (Cantidad Final para el cálculo)
       cantidadNeta: {
         type: DataTypes.FLOAT,
         allowNull: false,
       },
-      // -------------------------
 
       precio: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
       },
 
-      prima: {
-        type: DataTypes.DECIMAL(10, 2),
-        defaultValue: 0.0,
-      },
-
+      // El resultado de cantidadNeta * precio
       parcial: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
@@ -79,19 +65,13 @@ const DetalleLiquidacionModel = (sq) => {
       ProductoId: {
         type: DataTypes.UUID,
         allowNull: false,
-        references: {
-          model: 'Productos',
-          key: 'id',
-        },
+        references: { model: 'Productos', key: 'id' },
       },
 
       LiquidacionId: {
         type: DataTypes.UUID,
         allowNull: false,
-        references: {
-          model: 'Liquidaciones',
-          key: 'id',
-        },
+        references: { model: 'Liquidaciones', key: 'id' },
       },
     },
     {

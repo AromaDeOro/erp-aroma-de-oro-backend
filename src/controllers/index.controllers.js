@@ -14,6 +14,11 @@ import cuentasPorPagarControllers from './cuentas-por-pagar/index.controller.js'
 import liquidacionControllers from './liquidacion/index.controller.js'
 import ventaControllers from './venta/index.controller.js'
 import reporteControllers from './reporte/index.controller.js'
+import abonoPorPagarControllers from './abonos_por_pagar/index.controller.js'
+import anticipoControllers from './anticipo/index.controller.js'
+import prestamoControllers from './prestamo/index.controller.js'
+import gastoControllers from './gasto/index.controller.js'
+import abonosPorCobrarControllers from './abonos_por_cobrar/index.controller.js'
 
 export {
   authControllers,
@@ -30,4 +35,9 @@ export {
   liquidacionControllers,
   ventaControllers,
   reporteControllers,
+  abonoPorPagarControllers,
+  anticipoControllers,
+  prestamoControllers,
+  gastoControllers,
+  abonosPorCobrarControllers,
 }

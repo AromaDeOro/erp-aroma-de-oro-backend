@@ -9,95 +9,97 @@ const VentasModel = (sq) => {
         primaryKey: true,
         defaultValue: DataTypes.UUIDV4,
       },
-
-      numeroFactura: {
+      codigoVenta: {
         type: DataTypes.STRING,
-        allowNull: false,
         unique: true,
-      },
-
-      fecha: {
-        type: DataTypes.DATE,
         allowNull: false,
-        defaultValue: DataTypes.NOW,
       },
-
-      // --- DATOS DE CANTIDAD Y PRECIO ---
-      cantidadQuintales: {
+      // --- BLOQUE DE PESAJE AGRÍCOLA ---
+      unidad: {
+        type: DataTypes.ENUM,
+        allowNull: false,
+        values: ['Quintales', 'Kilogramos', 'Libras', 'Unidades', 'Arroba'],
+        defaultValue: 'Quintales',
+      },
+      cantidadBruta: {
+        type: DataTypes.FLOAT,
+        allowNull: false,
+        comment: 'Peso tal cual sale de báscula',
+      },
+      calificacion: {
+        type: DataTypes.FLOAT,
+        defaultValue: 0.0,
+        comment: 'Porcentaje de humedad o calidad (castigo al peso)',
+      },
+      impurezas: {
+        type: DataTypes.FLOAT,
+        defaultValue: 0.0,
+        comment: 'Porcentaje de impurezas (castigo al peso)',
+      },
+      descuentoMerma: {
+        type: DataTypes.FLOAT,
+        defaultValue: 0.0,
+        comment: 'Peso fijo restado (ej: sacos)',
+      },
+      cantidadNeta: {
+        type: DataTypes.FLOAT,
+        allowNull: false,
+        comment: 'Cantidad real facturada después de castigos',
+      },
+      // --- BLOQUE FINANCIERO ---
+      precioUnitario: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
       },
-      precioUnitario: {
-        type: DataTypes.DECIMAL(12, 4), // Mayor precisión para evitar pérdida de centavos
-        allowNull: false,
-      },
-
-      // --- BLOQUE FINANCIERO ---
-      subtotal: {
-        type: DataTypes.DECIMAL(12, 2),
-        allowNull: false,
-      },
-      porcentajeIVA: {
-        type: DataTypes.DECIMAL(5, 2),
+      montoAnticipo: {
+        type: DataTypes.DECIMAL(10, 2),
         defaultValue: 0.0,
-      },
-      totalIva: {
-        type: DataTypes.DECIMAL(12, 2),
-        defaultValue: 0.0,
+        comment: 'Dinero que el comprador ya entregó previamente (préstamo/adelanto)',
       },
       totalFactura: {
-        type: DataTypes.DECIMAL(12, 2),
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
-      },
-
-      // --- GESTIÓN DE COBROS Y CRÉDITO ---
-      estado: {
-        type: DataTypes.ENUM('Cobrado', 'Crédito'),
-        allowNull: false,
+        comment: 'Valor total de la mercadería (Peso Neto * Precio)',
       },
       montoAbonado: {
-        type: DataTypes.DECIMAL(12, 2),
-        allowNull: false,
+        type: DataTypes.DECIMAL(10, 2),
         defaultValue: 0.0,
+        comment: 'Dinero efectivo que entra a caja EN ESTE MOMENTO',
       },
       montoPendiente: {
-        type: DataTypes.DECIMAL(12, 2),
-        allowNull: false,
+        type: DataTypes.DECIMAL(10, 2),
         defaultValue: 0.0,
+        comment: 'Saldo restante por cobrar (Total - Anticipo - Abono Hoy)',
       },
-      fechaLimite: {
-        type: DataTypes.DATE,
-        allowNull: true, // Puede ser nulo si la venta es de contado
+      tipoVenta: {
+        type: DataTypes.ENUM,
+        values: ['Contado', 'Crédito'],
+        defaultValue: 'Contado',
       },
-
-      // --- RELACIONES (FOREIGN KEYS) ---
-      CompradorId: {
+      // --- RELACIONES ---
+      PersonaId: {
         type: DataTypes.UUID,
         allowNull: false,
-        references: {
-          model: 'Personas',
-          key: 'id',
-        },
+        references: { model: 'Personas', key: 'id' },
       },
       ProductoId: {
         type: DataTypes.UUID,
         allowNull: false,
-        references: {
-          model: 'Productos',
-          key: 'id',
-        },
+        references: { model: 'Productos', key: 'id' },
       },
       UsuarioId: {
         type: DataTypes.UUID,
         allowNull: false,
-        references: {
-          model: 'Usuarios',
-          key: 'id',
-        },
+        references: { model: 'Usuarios', key: 'id' },
+      },
+      CajaId: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: { model: 'Cajas', key: 'id' },
       },
     },
     {
-      timestamps: true, // Crea automáticamente createdAt y updatedAt
+      timestamps: true,
       tableName: 'Ventas',
     }
   )

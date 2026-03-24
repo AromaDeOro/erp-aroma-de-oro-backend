@@ -1,8 +1,8 @@
-import { listarPagos, listarPagosPorEmpleado } from "./get.controller.js";
-import { pagarJornal } from "./post.controller.js";
+import { listarPagos, listarPagosPorEmpleado } from './get.controller.js'
+import { procesarPagoNomina } from './post.controller.js'
 
 export default {
   listarPagos,
   listarPagosPorEmpleado,
-  pagarJornal,
-};
+  procesarPagoNomina,
+}

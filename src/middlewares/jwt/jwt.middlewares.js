@@ -28,7 +28,7 @@ const verificarToken = async (req = request, res = response, next) => {
         message: 'Petición denegada. Usuario no válido',
       })
 
-    if (!usuario.esAdministrador) {
+    if (usuario.rol !== 'Administrador') {
       return res.status(401).json({
         message: 'Petición denegada. No eres administrador',
       })

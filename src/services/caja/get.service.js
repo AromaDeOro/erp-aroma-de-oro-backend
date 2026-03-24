@@ -2,10 +2,12 @@ import { Op } from 'sequelize'
 import {
   Caja,
   DetalleLiquidacion,
+  Gasto,
   Liquidacion,
   Movimiento,
   Nomina,
   Persona,
+  Prestamo,
   Producto,
   Usuario,
   Venta,
@@ -50,6 +52,25 @@ const listarTodas = async () => {
             as: 'detalleNomina',
             required: false,
             include: [Persona, Usuario],
+          },
+
+          {
+            model: Prestamo,
+            as: 'detallePrestamo',
+            required: false,
+            include: [Persona, Usuario],
+          },
+          {
+            model: Gasto,
+            as: 'detalleGasto',
+            required: false,
+            include: [Usuario],
+          },
+          {
+            model: Venta,
+            as: 'detalleVenta',
+            required: false,
+            include: [Producto],
           },
         ],
       },

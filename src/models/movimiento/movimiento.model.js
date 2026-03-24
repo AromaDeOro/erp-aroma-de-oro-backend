@@ -21,7 +21,20 @@ const MovimientoModel = (sq) => {
       categoria: {
         type: DataTypes.ENUM,
         // Agregamos 'Bancos' para inyecciones/retiros y 'Otros' para imprevistos
-        values: ['Compra', 'Venta', 'Gasto', 'Nomina', 'Bancos', 'Otros'],
+        values: [
+          'Compra',
+          'Venta',
+          'Gasto General',
+          'Nomina',
+          'Bancos',
+          'Otros',
+          'Cuentas por Pagar',
+          'Cuentas por Cobrar',
+          'Anticipo',
+          'Préstamo',
+          'Cobro Anticipo',
+          'Cobro Préstamo',
+        ],
         allowNull: false,
       },
       monto: {
@@ -40,7 +53,7 @@ const MovimientoModel = (sq) => {
       },
       CajaId: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
         references: {
           model: 'Cajas',
           key: 'id',

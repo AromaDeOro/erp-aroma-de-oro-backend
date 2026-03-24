@@ -1,116 +1,197 @@
 import { Op } from 'sequelize'
-import { Caja, Movimiento, Nomina, Persona, sq } from '../../libs/db.js'
+import {
+  Caja,
+  Movimiento,
+  Nomina,
+  Persona,
+  Prestamo,
+  CuentasPorCobrar,
+  AbonosCuentasPorCobrar,
+  sq,
+} from '../../libs/db.js'
 
-const pagarJornal = async (data) => {
-  const { UsuarioId, diasTrabajados, valorJornal, bono, descuento, CajaId, PersonaId } = data
+const procesarPagoNomina = async (data) => {
+  const {
+    UsuarioId,
+    unidadesTrabajadas,
+    sueldoBase,
+    bono,
+    descuentoGeneral,
+    descuentoPrestamo,
+    CajaId,
+    PersonaId,
+    PrestamoId,
+    tipoPeriodo,
+  } = data
 
-  // Iniciamos la transacción para asegurar consistencia
   const t = await sq.transaction()
 
   try {
-    // 1. Validar que el empleado exista
+    // 1. VALIDACIÓN DE EXISTENCIA (TRABAJADOR Y CAJA)
     const persona = await Persona.findByPk(PersonaId, { transaction: t })
+    if (!persona) throw new Error('404:Empleado no encontrado')
 
-    if (!persona) {
-      await t.rollback()
-      return { code: 404, message: 'Empleado no encontrado' }
-    }
-
-    // 2. Validar que la caja esté abierta y traer el saldoActual
     const caja = await Caja.findOne({
       where: { id: CajaId, estado: 'Abierta' },
       transaction: t,
     })
+    if (!caja) throw new Error('400:La caja no está abierta')
 
-    if (!caja) {
-      await t.rollback()
-      return { code: 400, message: 'La caja no está abierta o no existe' }
-    }
+    // --- 2. VALIDACIÓN DE FRECUENCIA DE PAGO (ANTIDUPLICADOS) ---
+    const ultimoPago = await Nomina.findOne({
+      where: { PersonaId },
+      order: [['fechaPago', 'DESC']],
+      transaction: t,
+    })
 
-    // 3. Cálculos del pago
-    const montoBono = parseFloat(bono || 0)
-    const montoDescuento = parseFloat(descuento || 0)
-    const subTotal = parseFloat(diasTrabajados) * parseFloat(valorJornal) + montoBono
-    const totalAPagar = subTotal - montoDescuento
+    if (ultimoPago) {
+      const hoy = new Date()
+      const fechaUltimo = new Date(ultimoPago.fechaPago)
 
-    // 4. VALIDACIÓN CRÍTICA: ¿Hay dinero real en la caja física?
-    if (totalAPagar > parseFloat(caja.saldoActual)) {
-      await t.rollback()
-      return {
-        code: 400,
-        message: `Saldo insuficiente. Tienes $${caja.saldoActual} y el pago es de $${totalAPagar.toFixed(2)}`,
+      // Calculamos diferencia en días
+      const diffTime = Math.abs(hoy - fechaUltimo)
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+
+      // A. Bloqueo mismo día (Evita errores de doble clic o humanos)
+      if (diffDays < 1 && hoy.toDateString() === fechaUltimo.toDateString()) {
+        throw new Error('400:Este trabajador ya recibió un pago el día de hoy.')
+      }
+
+      // B. Bloqueo por periodo (Margen de maniobra para Aroma de Oro)
+      if (tipoPeriodo === 'Semanal' && diffDays < 6) {
+        throw new Error(`400:Periodo semanal incompleto. Último pago hace ${diffDays} días.`)
+      }
+      if (tipoPeriodo === 'Quincenal' && diffDays < 13) {
+        throw new Error(`400:Periodo quincenal incompleto. Faltan días para el siguiente pago.`)
+      }
+      if (tipoPeriodo === 'Mensual' && diffDays < 27) {
+        throw new Error(`400:Periodo mensual incompleto.`)
       }
     }
 
-    // 5. Evitar doble pago en el mismo día
-    const hoy = new Date()
-    const inicioDia = new Date(hoy.setHours(0, 0, 0, 0))
-    const finDia = new Date(hoy.setHours(23, 59, 59, 999))
+    // 3. CÁLCULOS DE VALORES
+    const mBono = parseFloat(bono || 0)
+    const dGen = parseFloat(descuentoGeneral || 0)
+    const sBase = parseFloat(sueldoBase || 0)
+    const uTrab = parseFloat(unidadesTrabajadas || 0)
+    const dPres = parseFloat(descuentoPrestamo || 0)
 
-    const pagoExistente = await Nomina.findOne({
-      where: {
-        PersonaId,
-        createdAt: { [Op.between]: [inicioDia, finDia] },
-      },
-      transaction: t,
-    })
+    // Subtotal: Jornal multiplica por unidades, el resto usa sueldo base directo
+    const subTotal = (tipoPeriodo === 'Jornal' ? uTrab * sBase : sBase) + mBono
+    const totalPagar = subTotal - dGen - dPres
 
-    if (pagoExistente) {
-      await t.rollback()
-      return { code: 400, message: 'Ya se registró un pago para este empleado el día de hoy' }
+    // 4. VALIDACIÓN DE SALDO EN CAJA
+    if (totalPagar > parseFloat(caja.saldoActual)) {
+      throw new Error(`400:Saldo insuficiente en caja Aroma de Oro ($${caja.saldoActual})`)
     }
 
-    // 6. Crear el registro de Nómina
-    const pago = await Nomina.create(
+    // 5. LÓGICA DE PRÉSTAMOS Y ABONOS A CUENTAS POR COBRAR (CxC)
+    if (PrestamoId && dPres > 0) {
+      const prestamoValidado = await Prestamo.findByPk(PrestamoId, { transaction: t })
+
+      if (!prestamoValidado || prestamoValidado.PersonaId !== PersonaId) {
+        throw new Error('400:Préstamo no válido para este trabajador')
+      }
+
+      // A. Actualizar el saldo del Préstamo
+      const nuevoSaldoPrestamo = parseFloat(prestamoValidado.saldoPendiente) - dPres
+      await prestamoValidado.update(
+        {
+          saldoPendiente: nuevoSaldoPrestamo,
+          cuotasPagadas: (prestamoValidado.cuotasPagadas || 0) + 1,
+          estado: nuevoSaldoPrestamo <= 0 ? 'Pagado' : 'Pendiente',
+        },
+        { transaction: t }
+      )
+
+      // B. Sincronizar con Cuentas por Cobrar (CxC)
+      const cxc = await CuentasPorCobrar.findOne({
+        where: { referenciaId: prestamoValidado.id, origen: 'Préstamo' },
+        transaction: t,
+      })
+
+      if (cxc) {
+        // Crear el abono contable
+        await AbonosCuentasPorCobrar.create(
+          {
+            monto: dPres,
+            fechaCobro: new Date(),
+            metodoCobro: 'Efectivo',
+            CuentaPorCobrarId: cxc.id,
+            UsuarioId: UsuarioId,
+          },
+          { transaction: t }
+        )
+
+        // Actualizar saldo de la CxC
+        const nuevoMontoCXC = parseFloat(cxc.montoPorCobrar) - dPres
+        await cxc.update(
+          {
+            montoPorCobrar: nuevoMontoCXC,
+            estado: nuevoMontoCXC <= 0 ? 'Cobrado' : 'Pendiente',
+          },
+          { transaction: t }
+        )
+      }
+    }
+
+    // 6. GENERACIÓN DEL CÓDIGO SECUENCIAL (NOM-XXXXXXX)
+    const ultimaNomina = await Nomina.findOne({
+      order: [['createdAt', 'DESC']],
+      transaction: t,
+    })
+    let nuevoNumero = ultimaNomina?.codigo ? parseInt(ultimaNomina.codigo.split('-')[1]) + 1 : 1
+    const nuevoCodigo = `NOM-${nuevoNumero.toString().padStart(7, '0')}`
+
+    // 7. REGISTROS FINALES (Nómina, Movimiento de Caja y Actualización de Saldo)
+    const pagoRealizado = await Nomina.create(
       {
-        diasTrabajados,
+        codigo: nuevoCodigo,
+        tipoPeriodo: tipoPeriodo || 'Jornal',
+        sueldoBase: sBase,
+        unidadesTrabajadas: uTrab,
         subTotal,
-        descuento: montoDescuento,
-        valorJornal,
-        total: totalAPagar,
-        bono: montoBono,
+        bono: mBono,
+        descuentoGeneral: dGen,
+        descuentoPrestamo: dPres,
+        totalPagar,
         PersonaId,
         UsuarioId,
+        PrestamoId: PrestamoId || null,
+        fechaPago: new Date(),
       },
       { transaction: t }
     )
 
-    // 7. Crear el Movimiento (Egreso)
     await Movimiento.create(
       {
-        monto: totalAPagar,
+        monto: totalPagar,
         tipoMovimiento: 'Egreso',
         categoria: 'Nomina',
         CajaId,
-        idReferencia: pago.id,
+        idReferencia: pagoRealizado.id,
       },
       { transaction: t }
     )
 
-    // 8. ACTUALIZAR CAJA: Restamos del saldoActual
-    // Importante: También podrías actualizar montoEsperado aquí si quieres llevar ambos,
-    // pero saldoActual es el que manda para el día a día.
-    await caja.decrement('saldoActual', {
-      by: totalAPagar,
-      transaction: t,
-    })
+    // Decrementar saldo de la caja Aroma de Oro
+    await caja.decrement('saldoActual', { by: totalPagar, transaction: t })
 
-    // Confirmamos todos los cambios
     await t.commit()
 
-    // Retornamos la caja actualizada para el frontend
-    const cajaFinal = await Caja.findByPk(CajaId)
-
     return {
-      code: 200,
-      message: `Pago de $${totalAPagar.toFixed(2)} realizado con éxito`,
-      caja: cajaFinal,
+      code: 201,
+      message: `Pago ${nuevoCodigo} procesado. Abono a CxC registrado.`,
+      pago: pagoRealizado,
     }
   } catch (error) {
     if (t) await t.rollback()
-    console.error('Error en pagarJornal:', error)
-    return { code: 500, message: 'Error interno al procesar el pago de jornal' }
+    const [code, message] = error.message.includes(':')
+      ? error.message.split(':')
+      : [500, error.message]
+
+    return { code: parseInt(code), message }
   }
 }
 
-export { pagarJornal }
+export { procesarPagoNomina }

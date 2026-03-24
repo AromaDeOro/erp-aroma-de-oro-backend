@@ -36,7 +36,7 @@ const iniciarSesion = async (cedula, clave) => {
     id: usuarioData.id,
     cedula: usuarioData.cedula,
     nombresCompletos: usuarioData.nombresCompletos,
-    esAdministrador: usuarioData.esAdministrador,
+    esAdministrador: usuarioData.rol === 'Administrador',
   })
 
   return {

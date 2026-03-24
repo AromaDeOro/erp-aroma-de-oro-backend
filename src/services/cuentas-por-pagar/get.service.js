@@ -1,4 +1,11 @@
-import { CuentasPorPagar, Liquidacion, Persona, Ticket, Usuario } from '../../libs/db.js'
+import {
+  AbonosCuentasPorPagar,
+  CuentasPorPagar,
+  Liquidacion,
+  Persona,
+  Ticket,
+  Usuario,
+} from '../../libs/db.js'
 
 const listarTodas = async () => {
   const cuentasPorPagar = await CuentasPorPagar.findAll({
@@ -6,6 +13,9 @@ const listarTodas = async () => {
       {
         model: Liquidacion,
         include: [Usuario, Persona],
+      },
+      {
+        model: AbonosCuentasPorPagar,
       },
     ],
   })
