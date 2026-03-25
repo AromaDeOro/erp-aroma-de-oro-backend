@@ -7,7 +7,12 @@ const reporteRouter = Router()
 
 const upload = multer({ storage: multer.memoryStorage() })
 
-reporteRouter.get('/listar/todos', jwtMiddlewares.verificarToken, reporteControllers.listarTodos)
+reporteRouter.get(
+  '/listar/todos',
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
+  reporteControllers.listarTodos
+)
 
 reporteRouter.post(
   '/subir-reporte',

@@ -35,8 +35,8 @@ const UsuarioModel = (sq) => {
       // CAMBIO AQUÍ: De Boolean a ENUM
       rol: {
         type: DataTypes.ENUM,
-        values: ['Administrador', 'Contador', 'Estandar'],
-        defaultValue: 'Estandar',
+        values: ['Administrador', 'Contador', 'Estándar'],
+        defaultValue: 'Estándar',
       },
       estaActivo: {
         type: DataTypes.BOOLEAN,

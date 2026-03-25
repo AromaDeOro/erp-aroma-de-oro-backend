@@ -1,3 +1,3 @@
-import jwtMiddlewares from './jwt/jwt.middlewares.js'
+import jwtMiddlewares from './jwt/index.jwt.js'
 import validatorMiddlewares from './validator/validator.middleware.js'
 export { jwtMiddlewares, validatorMiddlewares }

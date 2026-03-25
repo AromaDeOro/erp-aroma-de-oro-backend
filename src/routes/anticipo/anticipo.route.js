@@ -7,12 +7,21 @@ const anticipoRouter = Router()
 anticipoRouter.post(
   '/crear-anticipo',
   jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
   anticipoControllers.crearAnticipo
 )
-anticipoRouter.get('/listar-todos', jwtMiddlewares.verificarToken, anticipoControllers.listarTodos)
+anticipoRouter.get(
+  '/listar-todos',
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
+  anticipoControllers.listarTodos
+)
 anticipoRouter.get(
   '/obtener-pendientes/:id',
   jwtMiddlewares.verificarToken,
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
   anticipoControllers.listarPendientesPorPersona
 )
 

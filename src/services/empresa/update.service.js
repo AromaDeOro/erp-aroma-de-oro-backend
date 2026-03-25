@@ -1,17 +1,18 @@
-import { Empresa } from "../../libs/db.js";
+import { Empresa } from '../../libs/db.js'
 
+const actualizarInformacion = async (id, data) => {
+  const empresa = await Empresa.findByPk(id)
 
-const actualizarInformacion = async(id,data) => {
-    const empresa = await Empresa.findByPk(id)
-
-    if(empresa){
-        await Empresa.update(data)
-        return {code: 200, message: "Información actualizada"}
-    }else{
-        return {code: 404, message: "Error al actualizar"}
-    }
+  if (empresa) {
+    await Empresa.update(data, {
+      where: {
+        id,
+      },
+    })
+    return { code: 200, message: 'Información actualizada' }
+  } else {
+    return { code: 404, message: 'Error al actualizar' }
+  }
 }
 
-export {
-    actualizarInformacion
-}
+export { actualizarInformacion }

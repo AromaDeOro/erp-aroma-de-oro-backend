@@ -4,7 +4,17 @@ import { jwtMiddlewares } from '../../middlewares/index.middlewares.js'
 
 const gastoRouter = Router()
 
-gastoRouter.post('/crear-gasto', jwtMiddlewares.verificarToken, gastoControllers.crearGasto)
-gastoRouter.get('/listar-gastos', jwtMiddlewares.verificarToken, gastoControllers.listarGastos)
+gastoRouter.post(
+  '/crear-gasto',
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
+  gastoControllers.crearGasto
+)
+gastoRouter.get(
+  '/listar-gastos',
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
+  gastoControllers.listarGastos
+)
 
 export default gastoRouter

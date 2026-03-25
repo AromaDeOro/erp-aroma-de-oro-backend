@@ -6,42 +6,24 @@ const verificarToken = async (req = request, res = response, next) => {
   try {
     const token = req.header('x-token')
 
-    if (!token)
-      return res.status(401).json({
-        message: 'Petición denegada. No existe token en la petición',
-      })
+    if (!token) return res.status(401).json({ message: 'No existe token en la petición' })
 
     const { id } = jwtUtils.validarToken(token)
-    if (!id)
-      return res.status(401).json({
-        message: 'Petición denegada. Token inválido',
-      })
 
-    const usuario = await Usuario.findOne({
-      where: {
-        id,
-      },
-    })
+    // Buscamos al usuario que está haciendo la petición (quien emitió el token)
+    const usuarioAuth = await Usuario.findOne({ where: { id } })
 
-    if (!usuario || !usuario.estaActivo)
-      return res.status(401).json({
-        message: 'Petición denegada. Usuario no válido',
-      })
-
-    if (usuario.rol !== 'Administrador') {
-      return res.status(401).json({
-        message: 'Petición denegada. No eres administrador',
-      })
+    if (!usuarioAuth || !usuarioAuth.estaActivo) {
+      return res.status(401).json({ message: 'Usuario no válido o inactivo' })
     }
+
+    // Guardamos el usuario completo en la request para usarlo luego
+    req.usuario = usuarioAuth
 
     next()
   } catch (error) {
-    res.status(401).json({
-      message: 'Petición denegada. Token no válido.',
-    })
+    res.status(401).json({ message: 'Token no válido.' })
   }
 }
 
-export default {
-  verificarToken,
-}
+export { verificarToken }

@@ -9,10 +9,16 @@ productoRouter.get('/todos', productoControllers.listarProductos)
 productoRouter.post(
   '/agregar',
   jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
   validatorMiddlewares.validarDatos,
   validatorProducto.validacionCrearProducto,
   productoControllers.crearProducto
 )
-productoRouter.patch('/actualizar-informacion/:id', productoControllers.actualizarProducto)
+productoRouter.patch(
+  '/actualizar-informacion/:id',
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
+  productoControllers.actualizarProducto
+)
 
 export default productoRouter

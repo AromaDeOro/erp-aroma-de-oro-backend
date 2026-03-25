@@ -4,12 +4,23 @@ import { jwtMiddlewares } from '../../middlewares/index.middlewares.js'
 
 const nominaRouter = Router()
 
-nominaRouter.get('/listar-todos', jwtMiddlewares.verificarToken, nominaControllers.listarPagos)
+nominaRouter.get(
+  '/listar-todos',
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
+  nominaControllers.listarPagos
+)
 
-nominaRouter.get('/listar/empleado/:persona_id', nominaControllers.listarPagosPorEmpleado)
+nominaRouter.get(
+  '/listar/empleado/:persona_id',
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
+  nominaControllers.listarPagosPorEmpleado
+)
 nominaRouter.post(
   '/pagar-jornal',
   jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
   nominaControllers.procesarPagoNomina
 )
 export default nominaRouter
