@@ -62,4 +62,24 @@ personaRouter.delete(
   personaControllers.borrarPersona
 )
 
+personaRouter.patch(
+  `/recuperar-productor/:id`,
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
+  personaControllers.recuperarProductor
+)
+
+personaRouter.patch(
+  `/recuperar-trabajador/:id`,
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
+  personaControllers.recuperarTrabajador
+)
+personaRouter.patch(
+  `/recuperar-comprador/:id`,
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
+  personaControllers.recuperarComprador
+)
+
 export default personaRouter

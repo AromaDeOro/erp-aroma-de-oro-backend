@@ -7,7 +7,12 @@ import {
   listarTrabajadores,
 } from './get.service.js'
 import { registrarPersona } from './post.service.js'
-import { actualizarPersona } from './update.service.js'
+import {
+  actualizarPersona,
+  recuperarComprador,
+  recuperarProductor,
+  recuperarTrabajador,
+} from './update.service.js'
 
 export default {
   registrarPersona,
@@ -18,4 +23,7 @@ export default {
   listarProductores,
   borrarPersona,
   actualizarPersona,
+  recuperarComprador,
+  recuperarProductor,
+  recuperarTrabajador,
 }

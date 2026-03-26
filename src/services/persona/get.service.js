@@ -12,7 +12,6 @@ const listarProductores = async () => {
   const productores = await Persona.findAll({
     where: {
       tipo: 'Productor',
-      estaActivo: true,
     },
   })
 

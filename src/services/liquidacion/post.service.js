@@ -147,21 +147,34 @@ const registrarLiquidacion = async (data) => {
 
     // 8. CUENTAS POR PAGAR (Ajuste de Saldo Real)
     // El monto total que se le debe tras descuentos es: (Subtotal - Retenciones) - Anticipo
+    // 8. CUENTAS POR PAGAR (Ajuste de Saldo Real)
+    // El monto total que se le debe tras descuentos es: (Subtotal - Retenciones) - Anticipo
     const totalNetoTrasCruce = parseFloat(liquidacion.totalAPagar) - montoAnticipoAplicado
-    const saldoFinalDeuda = totalNetoTrasCruce - parseFloat(liquidacion.montoAbonado)
+    const montoAbonadoHoy = parseFloat(liquidacion.montoAbonado || 0)
+    const saldoFinalDeuda = totalNetoTrasCruce - montoAbonadoHoy
 
-    if (saldoFinalDeuda > 0) {
-      await CuentasPorPagar.create(
-        {
-          montoTotal: totalNetoTrasCruce,
-          montoAbonado: parseFloat(liquidacion.montoAbonado),
-          saldoPendiente: saldoFinalDeuda,
-          estado: 'Pendiente',
-          LiquidacionId: nuevaLiquidacion.id,
-        },
-        { transaction: t }
-      )
-    }
+    // REGISTRO OBLIGATORIO EN CXP PARA AUDITORÍA
+    await CuentasPorPagar.create(
+      {
+        montoTotal: totalNetoTrasCruce,
+        montoAbonado: montoAbonadoHoy,
+        saldoPendiente: Math.max(0, saldoFinalDeuda), // Evitamos negativos por decimales
+        // AQUÍ LA LÓGICA: Si el saldo es 0 o menos, ya está Liquidado
+        estado: saldoFinalDeuda <= 0 ? 'Pagado' : 'Pendiente',
+        LiquidacionId: nuevaLiquidacion.id,
+      },
+      { transaction: t }
+    )
+
+    // ACTUALIZAR ESTADO EN LA CABECERA DE LA LIQUIDACIÓN TAMBIÉN (Opcional pero recomendado)
+    await nuevaLiquidacion.update(
+      {
+        montoAbonado: montoAbonadoHoy,
+        montoPorPagar: Math.max(0, saldoFinalDeuda),
+        estado: saldoFinalDeuda <= 0 ? 'Pagada' : 'Pendiente',
+      },
+      { transaction: t }
+    )
 
     // 9. FLUJO DE CAJA REAL (Solo lo que sale físicamente hoy)
     const pEfec = parseFloat(liquidacion.pagoEfectivo || 0)

@@ -48,4 +48,11 @@ usuarioRouter.patch(
   usuarioControllers.actualizarClave
 )
 
+usuarioRouter.patch(
+  '/recuperar-usuario/:id',
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
+  usuarioControllers.recuperarUsuario
+)
+
 export default usuarioRouter

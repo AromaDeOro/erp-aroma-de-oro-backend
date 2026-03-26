@@ -80,4 +80,13 @@ const actualizarClave = async (id, nuevaClave) => {
     message: 'Contraseña actualizada con éxito',
   }
 }
-export { actualizarInformacion, actualizarClave }
+
+const recupearUsuario = async (id) => {
+  const usuario = await Usuario.findByPk(id)
+  if (!usuario) return { code: 404, message: 'Usuario no encontrado' }
+
+  if (usuario.estaActivo) return { code: 400, message: 'Usuario ya activo.' }
+  await usuario.update({ estaActivo: true })
+  return { code: 200, message: 'Usuario recuperado con éxito.' }
+}
+export { actualizarInformacion, actualizarClave, recupearUsuario }

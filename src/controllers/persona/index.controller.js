@@ -7,7 +7,12 @@ import {
   listarProductores,
 } from './get.controller.js'
 import { registrarPersona } from './post.controller.js'
-import { actualizarPersona } from './update.controller.js'
+import {
+  actualizarPersona,
+  recuperarComprador,
+  recuperarProductor,
+  recuperarTrabajador,
+} from './update.controller.js'
 
 export default {
   listarPersonas,
@@ -18,4 +23,7 @@ export default {
   listarTrabajadores,
   listarCompradores,
   listarProductores,
+  recuperarComprador,
+  recuperarTrabajador,
+  recuperarProductor,
 }

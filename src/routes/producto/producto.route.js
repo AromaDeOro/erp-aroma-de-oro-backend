@@ -21,4 +21,18 @@ productoRouter.patch(
   productoControllers.actualizarProducto
 )
 
+productoRouter.patch(
+  '/eliminar-producto/:id',
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
+  productoControllers.eliminarProducto
+)
+
+productoRouter.patch(
+  '/recuperar-producto/:id',
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
+  productoControllers.recuperarProducto
+)
+
 export default productoRouter
