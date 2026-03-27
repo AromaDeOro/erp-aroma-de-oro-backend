@@ -15,6 +15,7 @@ export const NODEMAILER_CONFIG = {
   host: 'smtp.gmail.com',
   port: 465,
   secure: true,
+  family: 4,
   auth: {
     user: EMAIL_SECURE_DIR,
     pass: EMAIL_SECURE_PASSWORD,
