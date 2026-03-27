@@ -105,6 +105,8 @@ const recuperarClave = async (correo) => {
   const empresa = await Empresa.findOne()
   const hashContraseña = await bcryptUtils.hashPassword(PASSWORD_DEFAULT)
 
+  const nombreEmpresa = empresa ? empresa.nombre : 'AROMA DE ORO'
+
   await usuario.update({
     clave: hashContraseña,
   })
@@ -113,7 +115,7 @@ const recuperarClave = async (correo) => {
     correo,
     usuario.nombresCompletos,
     PASSWORD_DEFAULT,
-    empresa.nombre
+    nombreEmpresa
   )
 
   return { code: 200, message: 'Nueva contraseña enviada al correo registrado' }
