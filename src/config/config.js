@@ -12,13 +12,22 @@ import {
 } from './envs.js'
 
 export const NODEMAILER_CONFIG = {
-  host: 'smtp.gmail.com',
-  port: 465, // Cambiado de 587 a 465
-  secure: true, // Cambiado de false a true
+  // IP de Google para evitar problemas de DNS en Render
+  host: '74.125.141.108',
+  port: 465,
+  secure: true,
   family: 4,
   auth: {
     user: EMAIL_SECURE_DIR,
     pass: EMAIL_SECURE_PASSWORD,
+  },
+  // LIMITAMOS EL TIEMPO DE ESPERA (VITAL)
+  connectionTimeout: 10000, // 10 segundos máximo para conectar
+  greetingTimeout: 5000, // 5 segundos para el saludo
+  socketTimeout: 10000, // 10 segundos de inactividad
+  tls: {
+    // Necesario porque usamos IP directa en lugar de nombre de dominio
+    rejectUnauthorized: false,
   },
 }
 
