@@ -118,7 +118,7 @@ const recuperarClave = async (correo) => {
       correo,
       usuario.nombresCompletos,
       PASSWORD_DEFAULT,
-      empresa.nombreEmpresa
+      nombreEmpresa
     )
 
     return { code: 200, message: 'Nueva contraseña enviada al correo registrado' }
