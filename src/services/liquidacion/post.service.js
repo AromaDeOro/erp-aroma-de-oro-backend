@@ -12,64 +12,107 @@ import {
   Anticipo,
   LiquidacionAnticipo,
   CuentasPorCobrar,
+  AbonosCuentasPorPagar,
 } from '../../libs/db.js'
 
 /**
  * CONVERSOR DINÁMICO DE UNIDADES
- * Triangula cualquier unidad usando Libras como base para precisión agrícola.
  */
 const convertirUnidadesBodega = (cantidad, unidadOrigen, unidadDestino) => {
   const cant = parseFloat(cantidad) || 0
   if (unidadOrigen === unidadDestino) return cant
-
-  const factores = {
-    Quintales: 100, // 1 QQ = 100 Lbs
-    Kilogramos: 2.20462, // 1 Kg = 2.20462 Lbs
-    Libras: 1,
-    Unidades: 1,
-  }
-
+  const factores = { Quintales: 100, Kilogramos: 2.20462, Libras: 1, Unidades: 1 }
   const enLibras = cant * (factores[unidadOrigen] || 1)
-  const resultado = enLibras / (factores[unidadDestino] || 1)
-  return resultado
+  return enLibras / (factores[unidadDestino] || 1)
 }
 
 const registrarLiquidacion = async (data) => {
   const { liquidacion, detalle, retencion, anticipo, CajaId } = data
-  const { UsuarioId, ProductorId } = liquidacion
+  const { UsuarioId, ProductorId, cuentaPorPagarSaldadaId, montoDeudaAnterior } = liquidacion
 
-  // 1. Validaciones de Integridad
+  // 1. Carga de datos iniciales
   const [usuario, productor, caja] = await Promise.all([
     Usuario.findOne({ where: { id: UsuarioId } }),
     Persona.findOne({ where: { id: ProductorId, tipo: 'Productor' } }),
     CajaId ? Caja.findOne({ where: { id: CajaId } }) : null,
   ])
 
-  if (!usuario) return { code: 400, message: 'Usuario no encontrado.' }
-  if (!productor) return { code: 400, message: 'El productor no existe.' }
-  if (!caja || caja.estado !== 'Abierta') {
-    return { code: 400, message: 'Se requiere una caja abierta para esta operación.' }
+  // 2. Validaciones de Integridad
+  if (!usuario || !productor || (CajaId && (!caja || caja.estado !== 'Abierta'))) {
+    return { code: 400, message: 'Validación de integridad fallida (Usuario, Productor o Caja).' }
+  }
+
+  // 3. VALIDACIÓN DE SALDO FÍSICO (Para evitar los números rojos de tu imagen)
+  const pEfec = parseFloat(liquidacion.pagoEfectivo || 0)
+  if (pEfec > parseFloat(caja.saldoActual)) {
+    return {
+      code: 400,
+      message: `Saldo insuficiente en caja. Intentas pagar $${pEfec.toFixed(2)} pero solo hay $${parseFloat(caja.saldoActual).toFixed(2)} disponible.`,
+    }
   }
 
   const t = await sq.transaction()
 
   try {
-    // 2. Correlativo de Liquidación
     const totalLiquidaciones = await Liquidacion.count({ transaction: t })
     const codigoLiq = 'LIQ-' + String(totalLiquidaciones + 1).padStart(7, '0')
 
-    // 3. Cabecera (liquidacion.totalAPagar ya viene como Subtotal - Retenciones)
     const nuevaLiquidacion = await Liquidacion.create(
       { ...liquidacion, codigo: codigoLiq },
       { transaction: t }
     )
 
-    // 4. CRUCE DE ANTICIPOS (Contable - Sin afectar flujo físico de hoy)
+    // --- 4. SALDAR DEUDA Y ACTUALIZAR LIQUIDACIÓN ORIGEN ---
+    if (cuentaPorPagarSaldadaId) {
+      const cxpAnterior = await CuentasPorPagar.findByPk(cuentaPorPagarSaldadaId, {
+        transaction: t,
+      })
+
+      if (cxpAnterior) {
+        const montoASaldar = parseFloat(montoDeudaAnterior || 0)
+
+        // Registro del abono formal
+        await AbonosCuentasPorPagar.create(
+          {
+            monto: montoASaldar,
+            metodoPago: 'Efectivo',
+            CuentaPorPagarId: cxpAnterior.id,
+            UsuarioId: UsuarioId,
+            notas: `Saldado en Liq ${codigoLiq}`,
+          },
+          { transaction: t }
+        )
+
+        // Cerramos la Cuenta por Pagar vieja
+        await cxpAnterior.update(
+          {
+            montoAbonado: parseFloat(cxpAnterior.montoTotal),
+            saldoPendiente: 0,
+            estado: 'Pagado',
+          },
+          { transaction: t }
+        )
+
+        // Sincronizamos la Liquidación que generó esa deuda
+        const liqOrigen = await Liquidacion.findByPk(cxpAnterior.LiquidacionId, { transaction: t })
+        if (liqOrigen) {
+          await liqOrigen.update(
+            {
+              montoAbonado: parseFloat(liqOrigen.totalAPagar),
+              montoPorPagar: 0,
+              estado: 'Pagada',
+            },
+            { transaction: t }
+          )
+        }
+      }
+    }
+
+    // --- 5. CRUCE DE ANTICIPOS ---
     let montoAnticipoAplicado = 0
     if (anticipo && parseFloat(anticipo.montoAplicado) > 0) {
       montoAnticipoAplicado = parseFloat(anticipo.montoAplicado)
       const antOriginal = await Anticipo.findByPk(anticipo.id, { transaction: t })
-
       if (antOriginal) {
         await LiquidacionAnticipo.create(
           {
@@ -89,7 +132,6 @@ const registrarLiquidacion = async (data) => {
           { transaction: t }
         )
 
-        // Actualizar Cuenta por Cobrar relacionada (El productor nos debía, ahora paga con cacao)
         const cxc = await CuentasPorCobrar.findOne({
           where: { referenciaId: antOriginal.id, origen: 'Anticipo' },
           transaction: t,
@@ -102,7 +144,6 @@ const registrarLiquidacion = async (data) => {
           )
         }
 
-        // Movimiento INFORMATIVO (CajaId: null porque no es dinero que entra a la gaveta hoy)
         await Movimiento.create(
           {
             tipoMovimiento: 'Ingreso',
@@ -110,34 +151,30 @@ const registrarLiquidacion = async (data) => {
             monto: montoAnticipoAplicado,
             idReferencia: nuevaLiquidacion.id,
             CajaId: null,
-            descripcion: `CRUCE CONTABLE: Anticipo cruzado en ${codigoLiq}.`,
+            descripcion: `CRUCE: Anticipo en ${codigoLiq}.`,
           },
           { transaction: t }
         )
       }
     }
 
-    // 5. Detalle de Compra
+    // --- 6. DETALLE Y STOCK ---
     await DetalleLiquidacion.create(
       { ...detalle, LiquidacionId: nuevaLiquidacion.id },
       { transaction: t }
     )
-
-    // 6. ACTUALIZACIÓN DE STOCK (Conversión Agrícola)
     const productoBodega = await Producto.findByPk(detalle.ProductoId, { transaction: t })
-    const unidadEnBodega = productoBodega.unidadMedida || 'Quintales'
-    const cantidadFinalStock = convertirUnidadesBodega(
+    const cantStock = convertirUnidadesBodega(
       detalle.cantidadNeta,
       detalle.unidad,
-      unidadEnBodega
+      productoBodega.unidadMedida || 'Quintales'
     )
-
     await productoBodega.update(
-      { stock: parseFloat(productoBodega.stock) + cantidadFinalStock },
+      { stock: parseFloat(productoBodega.stock) + cantStock },
       { transaction: t }
     )
 
-    // 7. Registro de Retención SRI
+    // --- 7. RETENCIÓN SRI ---
     if (retencion) {
       await Retencion.create(
         { ...retencion, LiquidacionId: nuevaLiquidacion.id },
@@ -145,44 +182,39 @@ const registrarLiquidacion = async (data) => {
       )
     }
 
-    // 8. CUENTAS POR PAGAR (Ajuste de Saldo Real)
-    // El monto total que se le debe tras descuentos es: (Subtotal - Retenciones) - Anticipo
-    // 8. CUENTAS POR PAGAR (Ajuste de Saldo Real)
-    // El monto total que se le debe tras descuentos es: (Subtotal - Retenciones) - Anticipo
-    const totalNetoTrasCruce =
+    // --- 8. CXP DE LA LIQUIDACIÓN ACTUAL (Lógica de saldos reales) ---
+    const montoDeudaVieja = parseFloat(montoDeudaAnterior || 0)
+    const netoHoy =
       parseFloat(liquidacion.totalLiquidacion) - montoAnticipoAplicado - liquidacion.totalRetencion
-    const montoAbonadoHoy = parseFloat(liquidacion.montoAbonado || 0)
-    const saldoFinalDeuda = totalNetoTrasCruce - montoAbonadoHoy
+    const totalGlobalDeuda = netoHoy + montoDeudaVieja
+    const abonadoHoy = parseFloat(liquidacion.montoAbonado || 0)
+    const saldoFinalDeuda = totalGlobalDeuda - abonadoHoy
 
-    // REGISTRO OBLIGATORIO EN CXP PARA AUDITORÍA
-    await CuentasPorPagar.create(
-      {
-        montoTotal: totalNetoTrasCruce,
-        montoAbonado: montoAbonadoHoy,
-        saldoPendiente: Math.max(0, saldoFinalDeuda), // Evitamos negativos por decimales
-        // AQUÍ LA LÓGICA: Si el saldo es 0 o menos, ya está Liquidado
-        estado: saldoFinalDeuda <= 0 ? 'Pagado' : 'Pendiente',
-        LiquidacionId: nuevaLiquidacion.id,
-      },
-      { transaction: t }
-    )
+    // Solo creamos registro en CuentasPorPagar si queda deuda real
+    if (saldoFinalDeuda > 0.01) {
+      await CuentasPorPagar.create(
+        {
+          montoTotal: netoHoy,
+          montoAbonado: Math.max(0, abonadoHoy - montoDeudaVieja),
+          saldoPendiente: Math.max(0, saldoFinalDeuda),
+          estado: 'Pendiente',
+          LiquidacionId: nuevaLiquidacion.id,
+        },
+        { transaction: t }
+      )
+    }
 
-    // ACTUALIZAR ESTADO EN LA CABECERA DE LA LIQUIDACIÓN TAMBIÉN (Opcional pero recomendado)
+    // Actualizamos cabecera de la liquidación actual
     await nuevaLiquidacion.update(
       {
-        montoAbonado: montoAbonadoHoy,
+        montoAbonado: abonadoHoy,
         montoPorPagar: Math.max(0, saldoFinalDeuda),
         estado: saldoFinalDeuda <= 0 ? 'Pagada' : 'Pendiente',
       },
       { transaction: t }
     )
 
-    // 9. FLUJO DE CAJA REAL (Solo lo que sale físicamente hoy)
-    const pEfec = parseFloat(liquidacion.pagoEfectivo || 0)
-    const pTran = parseFloat(liquidacion.pagoTransferencia || 0)
-    const pCheq = parseFloat(liquidacion.pagoCheque || 0)
-
-    // EFECTIVO: Descuento físico de la caja de la oficina
+    // --- 9. MOVIMIENTOS DE CAJA Y EGRESOS ---
     if (pEfec > 0) {
       await Movimiento.create(
         {
@@ -191,41 +223,39 @@ const registrarLiquidacion = async (data) => {
           monto: pEfec,
           idReferencia: nuevaLiquidacion.id,
           CajaId: CajaId,
-          descripcion: `PAGO EFECTIVO: Liq ${codigoLiq} (Neto entregado)`,
+          descripcion: `EGRESO: Liq ${codigoLiq} (Pago fruta + saldos ant.)`,
         },
         { transaction: t }
       )
       await caja.decrement({ saldoActual: pEfec }, { transaction: t })
     }
 
-    // BANCOS/CHEQUES: Registro contable informativo para conciliación
-    const totalBancario = pTran + pCheq
-    if (totalBancario > 0) {
+    const bancario =
+      parseFloat(liquidacion.pagoTransferencia || 0) + parseFloat(liquidacion.pagoCheque || 0)
+    if (bancario > 0) {
       await Movimiento.create(
         {
           tipoMovimiento: 'Egreso',
           categoria: 'Compra',
-          monto: totalBancario,
+          monto: bancario,
           idReferencia: nuevaLiquidacion.id,
           CajaId: CajaId,
-          descripcion: `PAGO BANCARIO: Liq ${codigoLiq} (Transf/Cheq)`,
+          descripcion: `BANCARIO: Liq ${codigoLiq}`,
         },
         { transaction: t }
       )
     }
 
     await t.commit()
-    const cajaRefrescada = await Caja.findByPk(CajaId)
-
     return {
       code: 201,
-      caja: cajaRefrescada,
-      message: 'Liquidación procesada con éxito.',
+      message: 'Liquidación procesada correctamente.',
       id: nuevaLiquidacion.id,
+      caja: await Caja.findByPk(CajaId),
     }
   } catch (error) {
     if (t) await t.rollback()
-    console.error('CRITICAL ERROR:', error)
+    console.error('SERVER ERROR:', error)
     return { code: 500, message: 'Error interno en el servidor.', error: error.message }
   }
 }

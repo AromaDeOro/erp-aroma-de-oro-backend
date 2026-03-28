@@ -1,4 +1,4 @@
-import { Persona } from '../../libs/db.js'
+import { CuentasPorPagar, Liquidacion, Persona } from '../../libs/db.js'
 
 const listarPersonas = async () => {
   const personas = await Persona.findAll()
@@ -13,6 +13,12 @@ const listarProductores = async () => {
     where: {
       tipo: 'Productor',
     },
+    include: [
+      {
+        model: Liquidacion,
+        include: [CuentasPorPagar],
+      },
+    ],
   })
 
   return {
