@@ -108,20 +108,12 @@ const recuperarClave = async (correo) => {
 
     // 2. Intentar enviar el correo (USANDO AWAIT)
     // Aunque el correo falle, la clave ya se cambió, pero atrapamos el error del helper
-    const enviado = await nodemailerHelper.recuperarContraseña(
+    nodemailerHelper.recuperarContraseña(
       correo,
       usuario.nombresCompletos,
       PASSWORD_DEFAULT,
       nombreEmpresa
     )
-
-    if (!enviado) {
-      return {
-        code: 200,
-        message:
-          'Clave reseteada, pero hubo un problema al enviar el correo. Contacte al administrador.',
-      }
-    }
 
     return { code: 200, message: 'Nueva contraseña enviada al correo registrado' }
   } catch (error) {

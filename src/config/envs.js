@@ -16,4 +16,5 @@ export const {
   CLOUDINARY_API_CLOUD_NAME,
   EMAIL_SECURE_PASSWORD,
   EMAIL_SECURE_DIR,
+  RESEND_API_KEY,
 } = process.env

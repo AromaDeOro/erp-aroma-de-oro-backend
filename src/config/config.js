@@ -9,24 +9,18 @@ import {
   CLOUDINARY_API_CLOUD_NAME,
   EMAIL_SECURE_DIR,
   EMAIL_SECURE_PASSWORD,
+  RESEND_API_KEY,
 } from './envs.js'
+import { Resend } from 'resend'
 
 export const NODEMAILER_CONFIG = {
   // IP de Google para evitar problemas de DNS en Render
-  host: '74.125.141.108',
+  host: 'smtp.gmail.com',
   port: 465,
   secure: true,
   auth: {
     user: EMAIL_SECURE_DIR,
     pass: EMAIL_SECURE_PASSWORD,
-  },
-  // LIMITAMOS EL TIEMPO DE ESPERA (VITAL)
-  connectionTimeout: 10000, // 10 segundos máximo para conectar
-  greetingTimeout: 5000, // 5 segundos para el saludo
-  socketTimeout: 10000, // 10 segundos de inactividad
-  tls: {
-    // Necesario porque usamos IP directa en lugar de nombre de dominio
-    rejectUnauthorized: false,
   },
 }
 

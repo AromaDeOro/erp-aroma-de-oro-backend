@@ -4,46 +4,42 @@ import { fileURLToPath } from 'url'
 import nodemailer from 'nodemailer'
 import { NODEMAILER_CONFIG } from '../../config/config.js'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
+const generatePathName = (filename) => {
+  const __dirname = dirname(fileURLToPath(import.meta.url))
+  const pathname = path.join(__dirname, `../../html/${filename}.html`)
+  return pathname
+}
 
-/**
- * Envía el correo de recuperación.
- * Se usa async/await para atrapar errores de red (como el ENETUNREACH de Render).
- */
-const recuperarContraseña = async (to, user, nuevaClave, nombreEmpresa) => {
+const send = (to, file, subject) => {
+  const transporter = nodemailer.createTransport(NODEMAILER_CONFIG)
+  transporter.sendMail({
+    from: 'rodrissolutions@gmail.com',
+    to,
+    subject,
+    html: file,
+  })
+}
+
+const recuperarContraseña = (to, user, nuevaClave, nombreEmpresa) => {
   try {
-    // Construcción de ruta absoluta al archivo HTML
-    const pathname = path.resolve(__dirname, '../../html/recuperar_contraseña.html')
+    const pathname = generatePathName('recuperar_clave')
 
     if (!fs.existsSync(pathname)) {
       throw new Error(`No se encontró el archivo HTML en: ${pathname}`)
     }
 
-    const content = fs.readFileSync(pathname, 'utf-8')
-
-    // Reemplazo de variables en el template
-    const htmlFinal = content
+    const file = fs
+      .readFileSync(pathname, { encoding: 'utf-8' })
+      .toString()
       .replace('{{NOMBRE_USUARIO}}', user)
       .replace('{{NUEVA_CLAVE}}', nuevaClave)
       .replace('{{NOMBRE_EMPRESA}}', nombreEmpresa)
 
-    // Creamos el transporte con la config que tiene family: 4
-    const transporter = nodemailer.createTransport(NODEMAILER_CONFIG)
-
-    // El await aquí es VITAL para que el catch funcione si falla la conexión
-    await transporter.sendMail({
-      from: `"Aroma de Oro" <${NODEMAILER_CONFIG.auth.user}>`,
-      to,
-      subject: 'Recuperación de contraseña - Aroma de Oro',
-      html: htmlFinal,
-    })
-
-    console.log(`✅ Correo enviado exitosamente a: ${to}`)
-    return true
+    send(to, file, 'Recuperación de clave - Aroma de Oro')
   } catch (error) {
     // Esto evita que el servidor se caiga (triggerUncaughtException)
     console.error('❌ ERROR EN HELPER DE CORREO:', error.message)
-    return false
+    return { code: 500, message: error.message }
   }
 }
 
