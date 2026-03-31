@@ -59,7 +59,7 @@ const actualizarPrestamo = async (data) => {
   if (cxc) {
     await cxc.update({
       montoTotal: nuevoMonto,
-      saldoPendiente: nuevoMonto,
+      montoPorCobrar: nuevoMonto,
     })
   }
 
