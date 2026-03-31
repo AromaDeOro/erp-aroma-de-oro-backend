@@ -34,6 +34,7 @@ const actualizarPrestamo = async (data) => {
     saldoPendiente: nuevoMonto, // Al no haber abonos, el saldo es el total
     cuotasPactadas,
     comentario: comentario?.toUpperCase(),
+    montoCuota: nuevoMonto / cuotasPactadas,
   })
 
   // 5. Actualizar la Caja (El saldo de Aroma de Oro debe cuadrar)
