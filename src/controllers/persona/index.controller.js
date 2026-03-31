@@ -5,6 +5,7 @@ import {
   listarTrabajadores,
   listarCompradores,
   listarProductores,
+  listarProximosCumples,
 } from './get.controller.js'
 import { registrarPersona } from './post.controller.js'
 import {
@@ -26,4 +27,5 @@ export default {
   recuperarComprador,
   recuperarTrabajador,
   recuperarProductor,
+  listarProximosCumples,
 }

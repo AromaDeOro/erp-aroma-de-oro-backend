@@ -3,8 +3,8 @@ import { personaService } from '../../services/index.services.js'
 const registrarPersona = async (req, res) => {
   try {
     const data = req.body
-    const { code, message } = await personaService.registrarPersona(data)
-    res.status(code).json({ message })
+    const { code, message, persona } = await personaService.registrarPersona(data)
+    res.status(code).json(persona ? { persona, message } : { message })
   } catch (error) {
     console.log(error)
     res.status(500).json({

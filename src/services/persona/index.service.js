@@ -4,6 +4,7 @@ import {
   listarPersonaPorClave,
   listarPersonas,
   listarProductores,
+  listarProximosCumples,
   listarTrabajadores,
 } from './get.service.js'
 import { registrarPersona } from './post.service.js'
@@ -26,4 +27,5 @@ export default {
   recuperarComprador,
   recuperarProductor,
   recuperarTrabajador,
+  listarProximosCumples,
 }

@@ -82,4 +82,11 @@ personaRouter.patch(
   personaControllers.recuperarComprador
 )
 
+personaRouter.get(
+  '/listar/cumples-trabajadores',
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
+  personaControllers.listarProximosCumples
+)
+
 export default personaRouter

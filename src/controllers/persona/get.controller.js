@@ -66,10 +66,42 @@ const listarPersonaPorClave = async (req, res) => {
   }
 }
 
+const listarProximosCumples = async (req, res) => {
+  try {
+    const hoy = new Date()
+    const manana = new Date()
+    manana.setDate(hoy.getDate() + 1)
+
+    const [respCumplesHoy, respCumpleasManana] = await Promise.all([
+      personaService.listarProximosCumples(hoy),
+      personaService.listarProximosCumples(manana),
+    ])
+
+    res.status(200).json({
+      cumples: {
+        alertasHoy: respCumplesHoy.trabajadores.map((p) => ({
+          mensaje: `¡Hoy es el cumpleaños de ${p.nombreCompleto}!`,
+          detalles: `Cumple ${p.getDataValue('edadCumplida')} años.`,
+          id: p.id,
+        })),
+        alertasManana: respCumpleasManana.trabajadores.map((p) => ({
+          mensaje: `¡Mañana cumple años ${p.nombreCompleto}!`,
+          detalles: `Cumple ${p.getDataValue('edadCumplida')} años.`,
+          id: p.id,
+        })),
+      },
+    })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: error.message })
+  }
+}
+
 export {
   listarPersonas,
   listarPersonaPorClave,
   listarCompradores,
   listarTrabajadores,
   listarProductores,
+  listarProximosCumples,
 }

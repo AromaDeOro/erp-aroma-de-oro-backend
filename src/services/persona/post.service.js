@@ -1,7 +1,9 @@
 import { Persona } from '../../libs/db.js'
 
 const registrarPersona = async (data) => {
-  const { numeroIdentificacion, telefono, correo } = data
+  const { numeroIdentificacion, telefono, correo, fechaNacimiento } = data
+
+  const fechaAjustada = fechaNacimiento ? `${fechaNacimiento}T12:00:00` : null
 
   const existeIdentificacion = await Persona.findOne({
     where: {
@@ -38,11 +40,12 @@ const registrarPersona = async (data) => {
     }
   }
 
-  const persona = await Persona.create(data)
+  const persona = await Persona.create({ ...data, fechaNacimiento: fechaAjustada })
   return persona
     ? {
         code: 201,
         message: 'Persona registrada exitosamente',
+        persona,
       }
     : {
         code: 400,
