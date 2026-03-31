@@ -24,4 +24,11 @@ prestamoRouter.get(
   prestamoControllers.listarPrestamosPendientesPorPersona
 )
 
+prestamoRouter.patch(
+  '/actualizar-prestamo',
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
+  prestamoControllers.actualizarPrestamo
+)
+
 export default prestamoRouter
