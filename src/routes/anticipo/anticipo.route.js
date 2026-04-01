@@ -25,4 +25,12 @@ anticipoRouter.get(
   anticipoControllers.listarPendientesPorPersona
 )
 
+anticipoRouter.patch(
+  '/actualizar-anticipo',
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
+  anticipoControllers.actualizarAnticipo
+)
+
 export default anticipoRouter

@@ -25,7 +25,7 @@ const DetalleLiquidacionModel = (sq) => {
       unidad: {
         type: DataTypes.ENUM,
         allowNull: false,
-        values: ['Quintales', 'Kilogramos', 'Libras', 'Unidades'],
+        values: ['Quintales', 'Kilogramos', 'Libras', 'Unidades', 'Tacho'],
       },
 
       // Peso Bruto (Báscula)

@@ -16,7 +16,7 @@ const ProductoModel = (sq) => {
       },
       unidadMedida: {
         type: DataTypes.ENUM,
-        values: ['Quintales', 'Kilogramos', 'Libras', 'Unidades'],
+        values: ['Quintales', 'Kilogramos', 'Libras', 'Unidades', 'Tacho'],
         defaultValue: 'Quintales',
         allowNull: false,
       },

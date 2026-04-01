@@ -1,5 +1,7 @@
 import {
+  AbonosCuentasPorPagar,
   Anticipo,
+  CuentasPorPagar,
   DetalleLiquidacion,
   Liquidacion,
   Persona,
@@ -33,6 +35,10 @@ const listarTodas = async () => {
             model: Usuario,
           },
         ],
+      },
+      {
+        model: CuentasPorPagar,
+        include: [AbonosCuentasPorPagar],
       },
     ],
     order: [['createdAt', 'DESC']],

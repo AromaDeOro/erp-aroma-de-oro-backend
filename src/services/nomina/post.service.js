@@ -170,6 +170,7 @@ const procesarPagoNomina = async (data) => {
         categoria: 'Nomina',
         CajaId,
         idReferencia: pagoRealizado.id,
+        descripcion: `GENERAL: PAGO DE NÓMINA `,
       },
       { transaction: t }
     )

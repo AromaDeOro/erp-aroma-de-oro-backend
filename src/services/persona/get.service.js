@@ -1,5 +1,5 @@
 import { col, fn, literal, Op, where } from 'sequelize'
-import { CuentasPorPagar, Liquidacion, Persona } from '../../libs/db.js'
+import { CuentasPorPagar, DetalleLiquidacion, Liquidacion, Persona, Venta } from '../../libs/db.js'
 
 const listarPersonas = async () => {
   const personas = await Persona.findAll()
@@ -17,7 +17,7 @@ const listarProductores = async () => {
     include: [
       {
         model: Liquidacion,
-        include: [CuentasPorPagar],
+        include: [DetalleLiquidacion, CuentasPorPagar],
       },
     ],
   })
@@ -34,6 +34,8 @@ const listarCompradores = async () => {
       tipo: 'Comprador',
     },
   })
+
+  console.log(compradores)
 
   return {
     code: 200,

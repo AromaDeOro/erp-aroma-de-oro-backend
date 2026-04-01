@@ -185,18 +185,26 @@ const registrarLiquidacion = async (data) => {
     // --- 8. CXP DE LA LIQUIDACIÓN ACTUAL (Lógica de saldos reales) ---
     const montoDeudaVieja = parseFloat(montoDeudaAnterior || 0)
     const netoHoy =
-      parseFloat(liquidacion.totalLiquidacion) - montoAnticipoAplicado - liquidacion.totalRetencion
+      parseFloat(liquidacion.totalLiquidacion) -
+      montoAnticipoAplicado -
+      (parseFloat(liquidacion.totalRetencion) || 0)
+
     const totalGlobalDeuda = netoHoy + montoDeudaVieja
     const abonadoHoy = parseFloat(liquidacion.montoAbonado || 0)
-    const saldoFinalDeuda = totalGlobalDeuda - abonadoHoy
+
+    // Calculamos el saldo y usamos un margen de error de 0.01 para evitar fallos por decimales
+    const saldoFinalDeuda = Math.max(0, totalGlobalDeuda - abonadoHoy)
+
+    // Determinamos el estado basado en si el saldo es despreciable (menor a un centavo)
+    const esPagada = saldoFinalDeuda < 0.01
 
     // Solo creamos registro en CuentasPorPagar si queda deuda real
-    if (saldoFinalDeuda > 0.01) {
+    if (!esPagada) {
       await CuentasPorPagar.create(
         {
           montoTotal: netoHoy,
           montoAbonado: Math.max(0, abonadoHoy - montoDeudaVieja),
-          saldoPendiente: Math.max(0, saldoFinalDeuda),
+          saldoPendiente: saldoFinalDeuda,
           estado: 'Pendiente',
           LiquidacionId: nuevaLiquidacion.id,
         },
@@ -204,12 +212,12 @@ const registrarLiquidacion = async (data) => {
       )
     }
 
-    // Actualizamos cabecera de la liquidación actual
+    // Actualizamos cabecera de la liquidación actual con el estado CORRECTO
     await nuevaLiquidacion.update(
       {
         montoAbonado: abonadoHoy,
-        montoPorPagar: Math.max(0, saldoFinalDeuda),
-        estado: saldoFinalDeuda <= 0 ? 'Pagada' : 'Pendiente',
+        montoPorPagar: esPagada ? 0 : saldoFinalDeuda,
+        estado: esPagada ? 'Pagada' : 'Pendiente', // <--- AQUÍ SE CORRIGE EL "PENDIENTE"
       },
       { transaction: t }
     )

@@ -138,8 +138,8 @@ CuentasPorCobrar.belongsTo(Venta, { foreignKey: 'VentaId' })
 CuentasPorCobrar.hasMany(AbonosCuentasPorCobrar, { foreignKey: 'CuentasPorCobrarId' })
 AbonosCuentasPorCobrar.belongsTo(CuentasPorCobrar, { foreignKey: 'CuentasPorCobrarId' })
 
-CuentasPorPagar.hasMany(AbonosCuentasPorPagar, { foreignKey: 'CuentasPorPagarId' })
-AbonosCuentasPorPagar.belongsTo(CuentasPorPagar, { foreignKey: 'CuentasPorPagarId' })
+CuentasPorPagar.hasMany(AbonosCuentasPorPagar, { foreignKey: 'CuentaPorPagarId' })
+AbonosCuentasPorPagar.belongsTo(CuentasPorPagar, { foreignKey: 'CuentaPorPagarId' })
 
 Usuario.hasMany(AbonosCuentasPorCobrar, { foreignKey: 'UsuarioId' })
 AbonosCuentasPorCobrar.belongsTo(Usuario, { foreignKey: 'UsuarioId' })

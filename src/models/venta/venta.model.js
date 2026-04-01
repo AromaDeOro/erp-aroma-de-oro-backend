@@ -18,7 +18,7 @@ const VentasModel = (sq) => {
       unidad: {
         type: DataTypes.ENUM,
         allowNull: false,
-        values: ['Quintales', 'Kilogramos', 'Libras', 'Unidades', 'Arroba'],
+        values: ['Quintales', 'Kilogramos', 'Libras', 'Unidades', 'Arroba', 'Tacho'],
         defaultValue: 'Quintales',
       },
       cantidadBruta: {
