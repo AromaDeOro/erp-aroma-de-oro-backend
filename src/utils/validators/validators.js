@@ -21,7 +21,7 @@ const validarRUC = (ruc) => {
   return ecuValidators.ruc(cleanRUC)
 }
 
-const validarTelefono = (telefono) => ecuValidators.telephone(telefono)
+const validarTelefono = (telefono) => ecuValidators.cellphone(telefono)
 
 export default {
   validarCedula,

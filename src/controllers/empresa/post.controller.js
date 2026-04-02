@@ -4,10 +4,14 @@ const crearEmpresa = async (req, res) => {
   try {
     const data = req.body
     console.log(data)
-    const { code, empresa } = await empresaService.crearEmpresa(data)
-    res.status(code).json({
-      empresa,
-    })
+    const { code, empresa, message } = await empresaService.crearEmpresa(data)
+    res.status(code).json(
+      message
+        ? { message }
+        : {
+            empresa,
+          }
+    )
   } catch (error) {
     console.log(error.message)
     res.status(500).json({
