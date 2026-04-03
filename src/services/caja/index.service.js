@@ -1,6 +1,11 @@
 import { obtenerCajaAbierta, listarCerradas, listarPorRango, listarTodas } from './get.service.js'
 import { abrirCaja } from './post.service.js'
-import { cerrarCaja, registrarInyeccionBanco, registrarVentaRapida } from './update.service.js'
+import {
+  cerrarCaja,
+  reAperturarCaja,
+  registrarInyeccionBanco,
+  registrarVentaRapida,
+} from './update.service.js'
 
 export default {
   abrirCaja,
@@ -11,4 +16,5 @@ export default {
   listarTodas,
   registrarInyeccionBanco,
   registrarVentaRapida,
+  reAperturarCaja,
 }

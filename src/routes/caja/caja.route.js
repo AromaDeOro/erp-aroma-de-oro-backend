@@ -56,4 +56,11 @@ cajaRouter.post(
   cajaControllers.registrarVentaRapida
 )
 
+cajaRouter.patch(
+  '/reabrir-caja/:id',
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador'),
+  cajaControllers.reAperturarCaja
+)
+
 export default cajaRouter

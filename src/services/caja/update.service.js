@@ -186,4 +186,27 @@ const registrarVentaRapida = async (data) => {
   }
 }
 
-export { cerrarCaja, registrarInyeccionBanco, registrarVentaRapida }
+const reAperturarCaja = async (id) => {
+  const caja = await Caja.findByPk(id)
+  if (!caja) return { code: 400, message: 'No se encontró la caja' }
+  if (caja.estado === 'Abierta')
+    return { code: 400, message: 'La caja actualmente se encuentra abierta' }
+
+  await caja.update({
+    fechaCierre: null,
+    estado: 'Abierta',
+    montoEsperado: 0.0,
+    montoCierre: 0.0,
+    diferencia: 0.0,
+    observaciones: null,
+  })
+
+  const cajaActualizada = await Caja.findByPk(id)
+  return {
+    code: 200,
+    message: 'La caja fue abierta nuevamente',
+    caja: cajaActualizada,
+  }
+}
+
+export { cerrarCaja, registrarInyeccionBanco, registrarVentaRapida, reAperturarCaja }
