@@ -32,7 +32,7 @@ const convertirUnidades = (cantidad, unidadOrigen, unidadDestino) => {
       break
     case 'Tacho':
       libras = valor * 53
-      break // Factor: 53 según contexto regional
+      break // Factor 53 regional
     default:
       libras = valor
   }
@@ -59,20 +59,17 @@ const registrarVenta = async (data) => {
   try {
     const { venta, CajaId } = data
 
-    // Desestructuración extendida para capturar métodos de pago específicos
     const {
       PersonaId,
       UsuarioId,
       ProductoId,
-      cantidadNeta,
       cantidadBruta,
       unidad,
       totalFactura,
       totalRetencion = 0,
-      montoAbonado = 0, // Total sumado (Efectivo + Cheque + Transferencia)
       montoAnticipo = 0,
       tipoVenta,
-      // Nuevos campos para control de flujo de caja real
+      // Desglose de pagos que viene del frontend
       pagoEfectivo = 0,
       pagoCheque = 0,
       pagoTransferencia = 0,
@@ -91,34 +88,41 @@ const registrarVenta = async (data) => {
 
     // 2. Validación y Conversión de Stock
     const stockARetirar = convertirUnidades(cantidadBruta, unidad, producto.unidadMedida)
-
     if (parseFloat(producto.stock) < stockARetirar) {
-      throw new Error(
-        `Stock insuficiente. Disponible: ${producto.stock} ${producto.unidadMedida}. Requerido: ${stockARetirar.toFixed(2)}`
-      )
+      throw new Error(`Stock insuficiente. Disponible: ${producto.stock} ${producto.unidadMedida}.`)
     }
 
     // 3. Código Correlativo
     const ultimaVenta = await Venta.count()
     const codigoVenta = `VNT-${(ultimaVenta + 1).toString().padStart(7, '0')}`
 
-    // 4. Lógica Financiera
+    // 4. Lógica Financiera Corregida
     const totalF = parseFloat(totalFactura || 0)
     const vRetenido = parseFloat(totalRetencion || 0)
     const anticipo = parseFloat(montoAnticipo || 0)
-    const abonoTotalHoy = parseFloat(montoAbonado || 0)
+
+    // Calculamos el abono total sumando los medios de pago recibidos
+    const efectivoReal = parseFloat(pagoEfectivo || 0)
+    const transferenciaReal = parseFloat(pagoTransferencia || 0)
+    const chequeReal = parseFloat(pagoCheque || 0)
+    const abonoTotalHoy = efectivoReal + transferenciaReal + chequeReal
 
     const totalALiquidar = Number((totalF - vRetenido - anticipo).toFixed(2))
     const pendiente = Number((totalALiquidar - abonoTotalHoy).toFixed(2))
 
-    // 5. CREAR REGISTRO DE VENTA
+    // 5. CREAR REGISTRO DE VENTA (Con las nuevas columnas)
     const nuevaVenta = await Venta.create(
       {
         ...venta,
         codigoVenta,
         valorRetenido: vRetenido,
         totalALiquidar: totalALiquidar,
+        montoAbonado: abonoTotalHoy,
         montoPendiente: pendiente > 0 ? pendiente : 0,
+        // Guardamos explícitamente para el comprobante
+        pagoEfectivo: efectivoReal,
+        pagoTransferencia: transferenciaReal,
+        pagoCheque: chequeReal,
         CajaId: caja.id,
       },
       { transaction: t }
@@ -127,29 +131,24 @@ const registrarVenta = async (data) => {
     // 6. ACTUALIZAR STOCK
     await producto.decrement('stock', { by: stockARetirar, transaction: t })
 
-    // 7. FLUJO DE DINERO EN CAJA (SOLO EFECTIVO)
-    // Solo el monto en efectivo afecta el saldo físico de la caja
-    const efectivoReal = parseFloat(pagoEfectivo || 0)
-
+    // 7. FLUJO DE DINERO EN CAJA (SOLO EFECTIVO REAL)
     if (efectivoReal > 0) {
       await Movimiento.create(
         {
           tipoMovimiento: 'Ingreso',
           categoria: 'Venta',
           monto: efectivoReal,
-          descripcion: `VENTA ${codigoVenta} | SOLO EFECTIVO | PRODUCTO: ${producto.nombre}`,
+          descripcion: `VENTA ${codigoVenta} | EFECTIVO RECIBIDO | PRODUCTO: ${producto.nombre}`,
           idReferencia: nuevaVenta.id,
           CajaId: caja.id,
         },
         { transaction: t }
       )
 
-      // Incremento de saldo físico
       await caja.increment('saldoActual', { by: efectivoReal, transaction: t })
     }
 
     // 8. CUENTA POR COBRAR
-    // Aquí usamos abonoTotalHoy porque el cliente pagó (sea como sea), reduciendo su deuda
     if (pendiente > 0 || tipoVenta === 'Crédito') {
       await CuentasPorCobrar.create(
         {
@@ -170,7 +169,7 @@ const registrarVenta = async (data) => {
 
     return {
       code: 201,
-      message: 'Venta registrada con éxito. Solo el efectivo afectó el saldo de caja.',
+      message: 'Venta registrada con éxito.',
       data: nuevaVenta,
     }
   } catch (error) {

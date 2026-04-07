@@ -86,8 +86,27 @@ const VentasModel = (sq) => {
       montoAbonado: {
         type: DataTypes.DECIMAL(10, 2),
         defaultValue: 0.0,
-        comment: 'Efectivo/Transferencia que entra a caja hoy',
+        comment: 'Suma total de lo pagado hoy (Efectivo + Transferencia + Cheque)',
       },
+
+      // --- NUEVOS CAMPOS: DESGLOSE DE PAGO RECIBIDO ---
+      // Estos campos son los que arreglan tu comprobante visualmente
+      pagoEfectivo: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0.0,
+        comment: 'Cantidad real recibida en efectivo físico',
+      },
+      pagoTransferencia: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0.0,
+        comment: 'Cantidad real recibida vía transferencia bancaria',
+      },
+      pagoCheque: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0.0,
+        comment: 'Cantidad recibida en cheques',
+      },
+
       montoPendiente: {
         type: DataTypes.DECIMAL(10, 2),
         defaultValue: 0.0,
