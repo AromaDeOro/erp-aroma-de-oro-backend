@@ -1,4 +1,4 @@
-import { DataTypes } from 'sequelize'
+import { DataTypes, DECIMAL } from 'sequelize'
 
 const ProductoModel = (sq) => {
   sq.define(
@@ -19,6 +19,11 @@ const ProductoModel = (sq) => {
         values: ['Quintales', 'Kilogramos', 'Libras', 'Unidades', 'Tacho'],
         defaultValue: 'Quintales',
         allowNull: false,
+      },
+      inversionInicial: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+        defaultValue: 0.0,
       },
       stock: {
         type: DataTypes.DECIMAL(10, 2),

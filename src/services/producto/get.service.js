@@ -1,8 +1,8 @@
-import { DetalleLiquidacion, Producto } from '../../libs/db.js'
+import { DetalleLiquidacion, Producto, Venta } from '../../libs/db.js'
 
 const listarProductos = async () => {
   const productos = await Producto.findAll({
-    include: [{ model: DetalleLiquidacion }],
+    include: [{ model: DetalleLiquidacion }, { model: Venta }],
     order: [['fechaCreacion', 'DESC']],
   })
 
