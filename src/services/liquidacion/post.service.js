@@ -1,18 +1,18 @@
 import {
-  Liquidacion,
-  Persona,
-  Usuario,
+  AbonosCuentasPorPagar,
+  Anticipo,
   Caja,
-  Movimiento,
+  CuentasPorCobrar,
   CuentasPorPagar,
-  sq,
   DetalleLiquidacion,
+  Liquidacion,
+  LiquidacionAnticipo,
+  Movimiento,
+  Persona,
   Producto,
   Retencion,
-  Anticipo,
-  LiquidacionAnticipo,
-  CuentasPorCobrar,
-  AbonosCuentasPorPagar,
+  sq,
+  Usuario,
 } from '../../libs/db.js'
 
 /**
@@ -223,6 +223,9 @@ const registrarLiquidacion = async (data) => {
     )
 
     // --- 9. MOVIMIENTOS DE CAJA Y EGRESOS ---
+    // --- 9. MOVIMIENTOS DE CAJA Y EGRESOS ---
+
+    // 9.1 Movimiento de Efectivo (Caja Física)
     if (pEfec > 0) {
       await Movimiento.create(
         {
@@ -231,24 +234,40 @@ const registrarLiquidacion = async (data) => {
           monto: pEfec,
           idReferencia: nuevaLiquidacion.id,
           CajaId: CajaId,
-          descripcion: `EGRESO: Liq ${codigoLiq} (Pago fruta + saldos ant.)`,
+          descripcion: `EFECTIVO: Liq ${codigoLiq} (Pago fruta + saldos ant.)`,
         },
         { transaction: t }
       )
       await caja.decrement({ saldoActual: pEfec }, { transaction: t })
     }
 
-    const bancario =
-      parseFloat(liquidacion.pagoTransferencia || 0) + parseFloat(liquidacion.pagoCheque || 0)
-    if (bancario > 0) {
+    // 9.2 Movimiento de Transferencia (Bancario)
+    const pTrans = parseFloat(liquidacion.pagoTransferencia || 0)
+    if (pTrans > 0) {
       await Movimiento.create(
         {
           tipoMovimiento: 'Egreso',
           categoria: 'Compra',
-          monto: bancario,
+          monto: pTrans,
           idReferencia: nuevaLiquidacion.id,
-          CajaId: CajaId,
-          descripcion: `BANCARIO: Liq ${codigoLiq}`,
+          CajaId: null, // No afecta a la caja física
+          descripcion: `TRANSFERENCIA: Liq ${codigoLiq}`, // <--- Ahora es específico
+        },
+        { transaction: t }
+      )
+    }
+
+    // 9.3 Movimiento de Cheque (Bancario)
+    const pCheque = parseFloat(liquidacion.pagoCheque || 0)
+    if (pCheque > 0) {
+      await Movimiento.create(
+        {
+          tipoMovimiento: 'Egreso',
+          categoria: 'Compra',
+          monto: pCheque,
+          idReferencia: nuevaLiquidacion.id,
+          CajaId: null, // No afecta a la caja física
+          descripcion: `CHEQUE: Liq ${codigoLiq}`, // <--- Ahora es específico
         },
         { transaction: t }
       )

@@ -81,4 +81,17 @@ const reAperturarCaja = async (req, res) => {
   }
 }
 
-export { cerrarCaja, postInyeccionBanco, registrarVentaRapida, reAperturarCaja }
+const updateDataCaja = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { montoCierre } = req.body
+    const { code, message } = await cajaService.updateDataCaja(id, montoCierre)
+    res.status(code).json({ message })
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error critico en el server',
+    })
+  }
+}
+
+export { cerrarCaja, postInyeccionBanco, reAperturarCaja, registrarVentaRapida, updateDataCaja }

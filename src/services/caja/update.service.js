@@ -217,4 +217,25 @@ const reAperturarCaja = async (id) => {
   }
 }
 
-export { cerrarCaja, registrarInyeccionBanco, registrarVentaRapida, reAperturarCaja }
+const updateDataCaja = async (id, montoCierre) => {
+  const caja = await Caja.findByPk(id)
+
+  const { saldoActual } = caja
+
+  await caja.update({
+    montoEsperado: saldoActual,
+    montoCierre,
+    diferencia:
+      montoCierre >= saldoActual ? montoCierre - saldoActual : (saldoActual - montoCierre) * -1,
+  })
+
+  return { code: 200, message: 'Caja actualizada' }
+}
+
+export {
+  cerrarCaja,
+  reAperturarCaja,
+  registrarInyeccionBanco,
+  registrarVentaRapida,
+  updateDataCaja,
+}

@@ -1,8 +1,8 @@
 import {
-  obtenerCajaAbierta,
   listarCerradas,
   listarPorRango,
   listarTodas,
+  obtenerCajaAbierta,
 } from './get.controller.js'
 import { abrirCaja } from './post.controller.js'
 import {
@@ -10,6 +10,7 @@ import {
   postInyeccionBanco,
   reAperturarCaja,
   registrarVentaRapida,
+  updateDataCaja,
 } from './update.controller.js'
 
 export default {
@@ -22,4 +23,5 @@ export default {
   postInyeccionBanco,
   registrarVentaRapida,
   reAperturarCaja,
+  updateDataCaja,
 }
