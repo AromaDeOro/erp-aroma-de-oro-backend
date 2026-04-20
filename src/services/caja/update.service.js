@@ -94,6 +94,7 @@ import { Caja, Movimiento, Producto, sq } from '../../libs/db.js'
 //     return { code: 500, message: 'Error interno al procesar el cierre' }
 //   }
 // }
+
 const cerrarCaja = async (id, data) => {
   const caja = await Caja.findByPk(id)
 

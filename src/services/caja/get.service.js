@@ -18,7 +18,10 @@ const responder = (cajas) => ({ code: 200, cajas })
 
 const listarTodas = async () => {
   const cajas = await Caja.findAll({
-    order: [['fechaApertura', 'DESC']],
+    order: [
+      ['fechaApertura', 'DESC'],
+      [Movimiento, 'createdAt', 'DESC'],
+    ],
     include: [
       {
         model: Movimiento,
@@ -110,4 +113,4 @@ const listarPorRango = async (fechaInicio, fechaFin) => {
   return responder(cajas)
 }
 
-export { obtenerCajaAbierta, listarCerradas, listarPorRango, listarTodas }
+export { listarCerradas, listarPorRango, listarTodas, obtenerCajaAbierta }
