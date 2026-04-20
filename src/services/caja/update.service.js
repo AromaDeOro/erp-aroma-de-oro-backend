@@ -1,92 +1,148 @@
 import { Caja, Movimiento, Producto, sq } from '../../libs/db.js'
 
+// const cerrarCaja = async (id, data) => {
+//   console.log(data)
+//   const caja = await Caja.findByPk(id)
+
+//   if (!caja) return { code: 404, message: 'Caja no encontrada' }
+//   if (caja.estado === 'Cerrada') return { code: 400, message: 'La caja ya está cerrada' }
+
+//   try {
+//     const movimientos = await Movimiento.findAll({
+//       where: { CajaId: id },
+//     })
+
+//     let ingresosFisicos = 0
+//     let egresosFisicos = 0
+//     let sumaInyeccionesBancos = 0
+//     let movimientosVirtuales = 0
+
+//     movimientos.forEach((m) => {
+//       const valor = parseFloat(m.monto)
+//       const desc = m.descripcion?.toUpperCase() || ''
+
+//       const esVirtual =
+//         desc.includes('BANCO') ||
+//         desc.includes('CHEQUE') ||
+//         desc.includes('TRANSFERENCIA') ||
+//         desc.includes('BANCARIO')
+
+//       if (m.tipoMovimiento === 'Ingreso') {
+//         if (!esVirtual) {
+//           ingresosFisicos += valor
+//         } else {
+//           movimientosVirtuales += valor
+//           if (m.categoria === 'Bancos') {
+//             sumaInyeccionesBancos += valor
+//           }
+//         }
+//       } else if (m.tipoMovimiento === 'Egreso') {
+//         if (!esVirtual) {
+//           egresosFisicos += valor
+//         } else {
+//           movimientosVirtuales -= valor
+//         }
+//       }
+//     })
+
+//     // --- CÁLCULOS DE SALDO ---
+//     const saldoBruto = parseFloat(caja.montoApertura) + ingresosFisicos - egresosFisicos
+//     const saldoSistemaFisico = Number(saldoBruto.toFixed(2))
+
+//     const montoContado = parseFloat(data.montoCierre)
+//     const diferenciaArqueo = Number((montoContado - saldoSistemaFisico).toFixed(2))
+
+//     // 1. ACTUALIZACIÓN DEL MODELO EN DB (Primero aseguramos el cierre)
+//     await caja.update({
+//       fechaCierre: new Date(),
+//       montoEsperado: saldoSistemaFisico,
+//       totalInyecciones: sumaInyeccionesBancos,
+//       montoCierre: montoContado,
+//       diferencia: diferenciaArqueo,
+//       estado: 'Cerrada',
+//       observaciones:
+//         data.observaciones || `Cierre Aroma de Oro. Diferencia: $${diferenciaArqueo.toFixed(2)}`,
+//     })
+
+//     // 2. EJECUCIÓN DEL BACKUP (Omitimos Cloudinary/DB por ahora, solo local)
+//     // Lo envolvemos en un try independiente para que un error de pg_dump no tumbe el cierre de caja
+//     // let backupPath = null
+//     // try {
+//     //   console.log('--- Iniciando proceso de backup de seguridad ---')
+//     //   backupPath = await backupUtils.generarBackup(id)
+//     // } catch (backupError) {
+//     //   console.error('⚠️ El cierre de caja fue exitoso, pero el BACKUP FALLÓ:', backupError.message)
+//     //   // Aquí podrías enviar un log a un servicio externo si quisieras
+//     // }
+
+//     return {
+//       code: 200,
+//       message: 'Caja cerrada y arqueada con éxito',
+//       resumen: {
+//         apertura: parseFloat(caja.montoApertura),
+//         totalIngresosEfectivo: Number(ingresosFisicos.toFixed(2)),
+//         totalEgresosEfectivo: Number(egresosFisicos.toFixed(2)),
+//         operacionesBancarias: Number(movimientosVirtuales.toFixed(2)),
+//         esperado: saldoSistemaFisico,
+//         contado: montoContado,
+//         diferencia: diferenciaArqueo,
+//         // backupLocal: backupPath ? 'Generado exitosamente' : 'Fallido',
+//       },
+//     }
+//   } catch (error) {
+//     console.error('Error crítico en servicio cerrarCaja:', error)
+//     return { code: 500, message: 'Error interno al procesar el cierre' }
+//   }
+// }
 const cerrarCaja = async (id, data) => {
-  console.log(data)
   const caja = await Caja.findByPk(id)
 
   if (!caja) return { code: 404, message: 'Caja no encontrada' }
   if (caja.estado === 'Cerrada') return { code: 400, message: 'La caja ya está cerrada' }
 
   try {
-    const movimientos = await Movimiento.findAll({
-      where: { CajaId: id },
-    })
-
-    let ingresosFisicos = 0
-    let egresosFisicos = 0
-    let sumaInyeccionesBancos = 0
-    let movimientosVirtuales = 0
-
-    movimientos.forEach((m) => {
-      const valor = parseFloat(m.monto)
-      const desc = m.descripcion?.toUpperCase() || ''
-
-      const esVirtual =
-        desc.includes('BANCO') ||
-        desc.includes('CHEQUE') ||
-        desc.includes('TRANSFERENCIA') ||
-        desc.includes('BANCARIO')
-
-      if (m.tipoMovimiento === 'Ingreso') {
-        if (!esVirtual) {
-          ingresosFisicos += valor
-        } else {
-          movimientosVirtuales += valor
-          if (m.categoria === 'Bancos') {
-            sumaInyeccionesBancos += valor
-          }
-        }
-      } else if (m.tipoMovimiento === 'Egreso') {
-        if (!esVirtual) {
-          egresosFisicos += valor
-        } else {
-          movimientosVirtuales -= valor
-        }
-      }
-    })
-
-    // --- CÁLCULOS DE SALDO ---
-    const saldoBruto = parseFloat(caja.montoApertura) + ingresosFisicos - egresosFisicos
-    const saldoSistemaFisico = Number(saldoBruto.toFixed(2))
-
+    // 1. OBTENER DATOS DIRECTOS DEL MODELO
+    // Usamos saldoActual porque ya contiene (Apertura + Ingresos - Egresos) en tiempo real
+    const saldoSistemaFisico = parseFloat(caja.saldoActual)
     const montoContado = parseFloat(data.montoCierre)
+
+    // El descuadre es la diferencia entre lo que el cajero dice tener y lo que el sistema acumuló
     const diferenciaArqueo = Number((montoContado - saldoSistemaFisico).toFixed(2))
 
-    // 1. ACTUALIZACIÓN DEL MODELO EN DB (Primero aseguramos el cierre)
+    // 2. INYECCIONES DE BANCO (Opcional)
+    // Si aún necesitas el dato de "totalInyecciones" para el reporte,
+    // lo ideal es sumarlo aquí o haberlo acumulado en un campo del modelo Caja previamente.
+    const inyecciones =
+      (await Movimiento.sum('monto', {
+        where: {
+          CajaId: id,
+          tipoMovimiento: 'Ingreso',
+          categoria: 'Bancos',
+        },
+      })) || 0
+
+    // 3. ACTUALIZACIÓN FINAL
     await caja.update({
       fechaCierre: new Date(),
-      montoEsperado: saldoSistemaFisico,
-      totalInyecciones: sumaInyeccionesBancos,
+      montoEsperado: saldoSistemaFisico, // Guardamos la "foto" de lo que debía haber
+      totalInyecciones: parseFloat(inyecciones),
       montoCierre: montoContado,
       diferencia: diferenciaArqueo,
       estado: 'Cerrada',
       observaciones:
-        data.observaciones || `Cierre Aroma de Oro. Diferencia: $${diferenciaArqueo.toFixed(2)}`,
+        data.observaciones || `Cierre realizado. Diferencia: $${diferenciaArqueo.toFixed(2)}`,
     })
 
-    // 2. EJECUCIÓN DEL BACKUP (Omitimos Cloudinary/DB por ahora, solo local)
-    // Lo envolvemos en un try independiente para que un error de pg_dump no tumbe el cierre de caja
-    // let backupPath = null
-    // try {
-    //   console.log('--- Iniciando proceso de backup de seguridad ---')
-    //   backupPath = await backupUtils.generarBackup(id)
-    // } catch (backupError) {
-    //   console.error('⚠️ El cierre de caja fue exitoso, pero el BACKUP FALLÓ:', backupError.message)
-    //   // Aquí podrías enviar un log a un servicio externo si quisieras
-    // }
-
+    // 4. RESPUESTA AL CLIENTE
     return {
       code: 200,
       message: 'Caja cerrada y arqueada con éxito',
       resumen: {
         apertura: parseFloat(caja.montoApertura),
-        totalIngresosEfectivo: Number(ingresosFisicos.toFixed(2)),
-        totalEgresosEfectivo: Number(egresosFisicos.toFixed(2)),
-        operacionesBancarias: Number(movimientosVirtuales.toFixed(2)),
         esperado: saldoSistemaFisico,
         contado: montoContado,
         diferencia: diferenciaArqueo,
-        // backupLocal: backupPath ? 'Generado exitosamente' : 'Fallido',
+        totalInyeccionesBancos: parseFloat(inyecciones),
       },
     }
   } catch (error) {
