@@ -5,7 +5,6 @@ const listarUsuarios = async (req, res) => {
     const { code, usuarios } = await usuarioService.listarUsuarios()
     res.status(code).json({ usuarios })
   } catch (error) {
-    console.log(error)
     res.status(500).json({
       message: 'Error interno en el servidor. Intente de nuevo',
     })
@@ -23,4 +22,4 @@ const listarUsuarioPorClave = async (req, res) => {
   }
 }
 
-export { listarUsuarios, listarUsuarioPorClave }
+export { listarUsuarioPorClave, listarUsuarios }

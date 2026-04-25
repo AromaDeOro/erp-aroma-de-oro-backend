@@ -5,7 +5,6 @@ const listarTodos = async (req, res) => {
     const { code, anticipos } = await anticipoService.listarTodos()
     res.status(code).json({ anticipos })
   } catch (error) {
-    console.log(error.message)
     res.status(500).json({ message: 'Error interno en el sevidor. Intente de nuevo.' })
   }
 }
@@ -15,9 +14,8 @@ const listarPendientesPorPersona = async (req, res) => {
     const { code, anticipos, message } = await anticipoService.listarPendientesPorPersona(id)
     res.status(code).json(message ? { message } : { anticipos })
   } catch (error) {
-    console.log(error.message)
     res.status(500).json({ message: 'Error interno en el sevidor. Intente de nuevo.' })
   }
 }
 
-export { listarTodos, listarPendientesPorPersona }
+export { listarPendientesPorPersona, listarTodos }

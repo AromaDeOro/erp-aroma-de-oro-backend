@@ -3,7 +3,6 @@ import { anticipoService } from '../../services/index.services.js'
 const crearAnticipo = async (req, res) => {
   try {
     const data = req.body
-    console.log(data)
     const { code, message, caja } = await anticipoService.crearAnticipo(data)
     res.status(code).json(caja ? { message, caja } : { message })
   } catch (error) {

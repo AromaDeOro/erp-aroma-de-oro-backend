@@ -6,7 +6,6 @@ const listarPorCxc = async (req, res) => {
     const { code, abonos, message } = await abonosPorCobrarService.listarPorCxc(id)
     res.status(code).json(abonos ? { abonos } : { message })
   } catch (error) {
-    console.log(error.message)
     res.status(500).json({
       message: error.message,
     })

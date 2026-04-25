@@ -8,7 +8,6 @@ const registrarCobro = async (req, res) => {
 
     res.status(code).json(cajaActualizada ? { caja: cajaActualizada, message } : { message })
   } catch (error) {
-    console.log(error.message)
     res.status(500).json({
       message: 'Error interno en el servidor. Intente de nuevo',
     })

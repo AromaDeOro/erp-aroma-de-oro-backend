@@ -13,7 +13,6 @@ const crearPrestamo = async (req, res) => {
         : { message }
     )
   } catch (error) {
-    console.log(error.message)
     res.status(500).json({
       message: 'Error interno en el servidor. Intente de nuevo',
     })
@@ -33,7 +32,6 @@ const prestamoTerceros = async (req, res) => {
         : { message }
     )
   } catch (error) {
-    console.log(error.message)
     res.status(500).json({
       message: 'Error interno en el servidor. Intente de nuevo',
     })

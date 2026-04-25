@@ -20,7 +20,6 @@ const listarProductores = async (req, res) => {
       productores,
     })
   } catch (error) {
-    console.log(error.message)
     res.status(500).json({
       message: 'Error interno en el servidor. Intente de nuevo.',
     })
@@ -92,16 +91,15 @@ const listarProximosCumples = async (req, res) => {
       },
     })
   } catch (error) {
-    console.log(error)
     res.status(500).json({ message: error.message })
   }
 }
 
 export {
-  listarPersonas,
-  listarPersonaPorClave,
   listarCompradores,
-  listarTrabajadores,
+  listarPersonaPorClave,
+  listarPersonas,
   listarProductores,
   listarProximosCumples,
+  listarTrabajadores,
 }

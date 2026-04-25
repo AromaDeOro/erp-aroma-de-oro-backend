@@ -5,7 +5,6 @@ const listarGastos = async (req, res) => {
     const { code, gastos } = await gastoService.listarGastos()
     res.status(code).json({ gastos })
   } catch (error) {
-    console.log(error.message)
     res.status(500).json({
       message: 'Error interno en el servidor. Intente de nuevo',
     })

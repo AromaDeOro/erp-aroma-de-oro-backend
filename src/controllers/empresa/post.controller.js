@@ -3,7 +3,6 @@ import { empresaService } from '../../services/index.services.js'
 const crearEmpresa = async (req, res) => {
   try {
     const data = req.body
-    console.log(data)
     const { code, empresa, message } = await empresaService.crearEmpresa(data)
     res.status(code).json(
       message
@@ -13,7 +12,6 @@ const crearEmpresa = async (req, res) => {
           }
     )
   } catch (error) {
-    console.log(error.message)
     res.status(500).json({
       message: 'Error interno en el servidor. Intente más tarde.',
     })

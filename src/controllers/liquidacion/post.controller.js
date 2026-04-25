@@ -3,7 +3,6 @@ import { liquidacionService } from '../../services/index.services.js'
 const registrarLiquidacion = async (req, res) => {
   try {
     const data = req.body
-    console.log(data)
 
     const { code, message, error, id, caja } = await liquidacionService.registrarLiquidacion(data)
 
@@ -20,7 +19,6 @@ const registrarLiquidacion = async (req, res) => {
           }
     )
   } catch (error) {
-    console.log(error.message)
     res.status(500).json({ message: error.message })
   }
 }

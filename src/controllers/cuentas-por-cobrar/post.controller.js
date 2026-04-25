@@ -7,7 +7,6 @@ const crearPrestamoTercero = async (req, res) => {
 
     res.status(code).json(caja ? { caja, message } : { message })
   } catch (error) {
-    console.log(error.message)
     res.status(500).json({
       message: 'Error crítico en el servidor.',
     })

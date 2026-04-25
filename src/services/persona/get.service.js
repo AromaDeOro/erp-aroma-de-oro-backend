@@ -1,5 +1,5 @@
-import { col, fn, literal, Op, where } from 'sequelize'
-import { CuentasPorPagar, DetalleLiquidacion, Liquidacion, Persona, Venta } from '../../libs/db.js'
+import { fn, literal, Op, where } from 'sequelize'
+import { CuentasPorPagar, DetalleLiquidacion, Liquidacion, Persona } from '../../libs/db.js'
 
 const listarPersonas = async () => {
   const personas = await Persona.findAll({
@@ -38,8 +38,6 @@ const listarCompradores = async () => {
     },
     order: [['createdAt', 'DESC']],
   })
-
-  console.log(compradores)
 
   return {
     code: 200,
@@ -109,10 +107,10 @@ const listarProximosCumples = async (fecha = new Date()) => {
 }
 
 export {
-  listarPersonas,
-  listarPersonaPorClave,
-  listarProductores,
   listarCompradores,
-  listarTrabajadores,
+  listarPersonaPorClave,
+  listarPersonas,
+  listarProductores,
   listarProximosCumples,
+  listarTrabajadores,
 }

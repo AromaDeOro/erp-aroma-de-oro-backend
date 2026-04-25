@@ -16,7 +16,6 @@ const listarPendientes = async (req, res) => {
     const { code, cuentasPorPagar } = await cuentasPorPagarService.listarPendientes()
     res.status(code).json({ cuentasPorPagar })
   } catch (error) {
-    console.log(error.message)
     res.status(500).json({
       message: 'Error interno en el servidor. Intente de nuevo',
     })
@@ -55,4 +54,4 @@ const obtenerInformacion = async (req, res) => {
   }
 }
 
-export { listarTodas, obtenerInformacion, listarPendientes, listarPagadas }
+export { listarPagadas, listarPendientes, listarTodas, obtenerInformacion }

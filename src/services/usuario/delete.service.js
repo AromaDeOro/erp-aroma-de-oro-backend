@@ -7,8 +7,6 @@ const borrarUsuario = async (id) => {
     },
   })
 
-  console.log(usuario)
-
   if (!usuario) return { code: 404, message: 'Usuario no encontrado' }
 
   if (usuario.rol === 'Administrador') {
