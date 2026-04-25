@@ -23,4 +23,11 @@ nominaRouter.post(
   jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
   nominaControllers.procesarPagoNomina
 )
+
+nominaRouter.delete(
+  '/eliminar-trabajador/:id',
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
+  nominaControllers.eliminarTrabajador
+)
 export default nominaRouter
