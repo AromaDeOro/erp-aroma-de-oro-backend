@@ -26,7 +26,6 @@ const UsuarioModel = (sq) => {
       correo: {
         type: DataTypes.STRING,
         allowNull: true,
-        unique: true,
       },
       clave: {
         type: DataTypes.STRING,

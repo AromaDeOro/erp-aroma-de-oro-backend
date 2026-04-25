@@ -1,7 +1,6 @@
 import { Router } from 'express'
 import { usuarioControllers } from '../../controllers/index.controllers.js'
-import { jwtMiddlewares, validatorMiddlewares } from '../../middlewares/index.middlewares.js'
-import { validatorUsuario } from '../../validations/index.validations.js'
+import { jwtMiddlewares } from '../../middlewares/index.middlewares.js'
 
 const usuarioRouter = Router()
 
@@ -22,8 +21,6 @@ usuarioRouter.post(
   '/agregar',
   jwtMiddlewares.verificarToken,
   jwtMiddlewares.rolesAdmitidos('Administrador', 'Contador'),
-  validatorUsuario.validacionCrearUsuario,
-  validatorMiddlewares.validarDatos,
   usuarioControllers.agregarUsuario
 )
 

@@ -4,9 +4,9 @@ import { bcryptUtils, validatorsUtils } from '../../utils/index.utils.js'
 const agregarUsuario = async (data) => {
   const { cedula, telefono, correo, clave } = data
 
-  if (!validatorsUtils.validarCedula(cedula)) {
-    return { code: 400, message: 'El número de cédula no es válido' }
-  }
+  // if (!validatorsUtils.validarCedula(cedula)) {
+  //   return { code: 400, message: 'El número de cédula no es válido' }
+  // }
   const existeCedula = await Usuario.findOne({
     where: {
       cedula,
@@ -35,7 +35,7 @@ const agregarUsuario = async (data) => {
         message: 'Ya existe un usuario registrado con este teléfono',
       }
   }
-  if (correo) {
+  if (correo && correo.length > 0) {
     const correoExiste = await Usuario.findOne({
       where: {
         correo,
