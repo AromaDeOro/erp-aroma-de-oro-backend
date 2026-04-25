@@ -35,18 +35,19 @@ const agregarUsuario = async (data) => {
         message: 'Ya existe un usuario registrado con este teléfono',
       }
   }
+  if (correo) {
+    const correoExiste = await Usuario.findOne({
+      where: {
+        correo,
+      },
+    })
 
-  const correoExiste = await Usuario.findOne({
-    where: {
-      correo,
-    },
-  })
-
-  if (correoExiste)
-    return {
-      code: 400,
-      message: 'Ya existe un usuario registrado con este correo',
-    }
+    if (correoExiste)
+      return {
+        code: 400,
+        message: 'Ya existe un usuario registrado con este correo',
+      }
+  }
 
   const claveCifrada = await bcryptUtils.hashPassword(clave)
   const usuario = await Usuario.create({

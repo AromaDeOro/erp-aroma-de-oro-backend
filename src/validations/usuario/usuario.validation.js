@@ -1,23 +1,19 @@
-import { body } from "express-validator";
+import { body } from 'express-validator'
 
 const validacionCrearUsuario = [
-  body("cedula")
+  body('cedula')
     .notEmpty()
-    .withMessage("La cédula es obligatoria")
+    .withMessage('La cédula es obligatoria')
     .matches(/^[0-9]{10}$/)
-    .withMessage("La cédula debe tener exactamente 10 dígitos numéricos"),
+    .withMessage('La cédula debe tener exactamente 10 dígitos numéricos'),
 
-  body("telefono")
+  body('telefono')
     .notEmpty()
-    .withMessage("El teléfono es obligatorio")
+    .withMessage('El teléfono es obligatorio')
     .matches(/^[0-9]{10}$/)
-    .withMessage("El teléfono debe tener exactamente 10 dígitos numéricos"),
-  body("correo")
-    .matches(/^[^\s@]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)
-    .withMessage("Debe ser un correo válido y realista")
-    .normalizeEmail(),
-];
+    .withMessage('El teléfono debe tener exactamente 10 dígitos numéricos'),
+]
 
 export default {
   validacionCrearUsuario,
-};
+}
