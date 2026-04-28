@@ -2,6 +2,7 @@ import { listarCerradas, listarPorRango, listarTodas, obtenerCajaAbierta } from 
 import { abrirCaja } from './post.service.js'
 import {
   cerrarCaja,
+  corregirDescuadre,
   reAperturarCaja,
   registrarInyeccionBanco,
   registrarVentaRapida,
@@ -19,4 +20,5 @@ export default {
   registrarVentaRapida,
   reAperturarCaja,
   updateDataCaja,
+  corregirDescuadre,
 }

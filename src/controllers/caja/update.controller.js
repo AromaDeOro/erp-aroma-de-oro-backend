@@ -93,4 +93,25 @@ const updateDataCaja = async (req, res) => {
   }
 }
 
-export { cerrarCaja, postInyeccionBanco, reAperturarCaja, registrarVentaRapida, updateDataCaja }
+const corregirDescuadre = async (req, res) => {
+  try {
+    const { CajaId } = req.body
+    const { code, message, detalles } = await cajaService.corregirDescuadre(CajaId)
+    res.status(code).json(detalles ? { message, detalles } : { message })
+  } catch (error) {
+    console.log(error)
+    const err = error.message || 'Error crítico en el servidor. Intente de nuevo'
+    res.status(500).json({
+      message: err,
+    })
+  }
+}
+
+export {
+  cerrarCaja,
+  corregirDescuadre,
+  postInyeccionBanco,
+  reAperturarCaja,
+  registrarVentaRapida,
+  updateDataCaja,
+}

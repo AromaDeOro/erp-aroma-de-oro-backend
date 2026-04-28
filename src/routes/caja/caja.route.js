@@ -63,6 +63,13 @@ cajaRouter.patch(
   cajaControllers.reAperturarCaja
 )
 
+cajaRouter.patch(
+  '/corregir-descuadre',
+  jwtMiddlewares.verificarToken,
+  jwtMiddlewares.rolesAdmitidos('Administrador'),
+  cajaControllers.corregirDescuadre
+)
+
 // cajaRouter.patch(
 //   '/actualizar-data/:id',
 //   jwtMiddlewares.verificarToken,

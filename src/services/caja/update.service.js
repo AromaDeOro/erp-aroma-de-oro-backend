@@ -1,4 +1,5 @@
-import { Caja, Movimiento, Producto, sq } from '../../libs/db.js'
+import { Op } from 'sequelize'
+import { Anticipo, Caja, Gasto, Movimiento, Producto, sq, Venta } from '../../libs/db.js'
 
 // const cerrarCaja = async (id, data) => {
 //   console.log(data)
@@ -294,8 +295,124 @@ const updateDataCaja = async (id, montoCierre) => {
   return { code: 200, message: 'Caja actualizada' }
 }
 
+const corregirDescuadre = async (CajaIdErronea) => {
+  const t = await sq.transaction()
+
+  try {
+    // 1. Obtener la caja "vieja" (la del 27 que tiene los movimientos del 28)
+    const cajaVieja = await Caja.findByPk(CajaIdErronea, { transaction: t })
+
+    // 2. Buscar la caja "correcta" (La más reciente que esté abierta)
+    const cajaNueva = await Caja.findOne({
+      where: {
+        estado: 'Abierta',
+        id: { [Op.ne]: CajaIdErronea }, // Que no sea la misma
+      },
+      order: [['createdAt', 'DESC']],
+      transaction: t,
+    })
+
+    if (!cajaNueva) {
+      return { code: 400, message: 'No se encontró una caja activa para mover los flujos.' }
+    }
+
+    // 3. Identificar los movimientos "huérfanos"
+    // (Hechos después de que se abrió la caja de hoy)
+    const movimientosHuerfanos = await Movimiento.findAll({
+      where: {
+        CajaId: cajaVieja.id,
+        fecha: {
+          [Op.gte]: cajaNueva.createdAt,
+        },
+      },
+      transaction: t,
+    })
+
+    if (movimientosHuerfanos.length === 0) {
+      await t.rollback()
+      return { code: 404, message: 'No hay movimientos fuera de fecha en esta caja.' }
+    }
+
+    let ajusteEfectivo = 0
+
+    // 4. Bucle de reasignación masiva
+    for (const mov of movimientosHuerfanos) {
+      const montoNum = Number(mov.monto)
+
+      // Calculamos el impacto en el saldo (Inverso: si es Egreso, lo sumamos para devolverlo)
+      if (mov.tipoMovimiento === 'Egreso') {
+        ajusteEfectivo += montoNum
+      } else {
+        ajusteEfectivo -= montoNum
+      }
+
+      // --- SINCRONIZACIÓN DE MODELOS RELACIONADOS ---
+      // Buscamos en todas las tablas que dependen de CajaId
+      const modelos = [
+        { mdl: Gasto, campoFecha: 'fecha' },
+        { mdl: Anticipo, campoFecha: 'fechaEmision' },
+        { mdl: Venta, campoFecha: 'createdAt' },
+      ]
+
+      for (const item of modelos) {
+        await item.mdl.update(
+          { CajaId: cajaNueva.id },
+          {
+            where: {
+              CajaId: cajaVieja.id,
+              // Matcheo por monto (o monto abonado en ventas) y cercanía de tiempo
+              [Op.and]: [
+                {
+                  [Op.or]: [{ monto: mov.monto }, { montoAbonado: mov.monto }],
+                },
+                {
+                  [item.campoFecha]: {
+                    [Op.between]: [
+                      new Date(new Date(mov.fecha).getTime() - 30000), // -30 seg
+                      new Date(new Date(mov.fecha).getTime() + 30000), // +30 seg
+                    ],
+                  },
+                },
+              ],
+            },
+            transaction: t,
+          }
+        )
+      }
+
+      // Finalmente, actualizamos el Movimiento
+      await mov.update({ CajaId: cajaNueva.id }, { transaction: t })
+    }
+
+    // 5. Ajuste de Saldos Actuales
+    // A la vieja le devolvemos el dinero (porque el gasto no era de ella)
+    const nuevoSaldoVieja = Number(cajaVieja.saldoActual) + ajusteEfectivo
+    // A la nueva le restamos el dinero (porque el gasto sí ocurrió hoy)
+    const nuevoSaldoNueva = Number(cajaNueva.saldoActual) - ajusteEfectivo
+
+    await cajaVieja.update({ saldoActual: nuevoSaldoVieja }, { transaction: t })
+    await cajaNueva.update({ saldoActual: nuevoSaldoNueva }, { transaction: t })
+
+    // 6. Finalizar
+    await t.commit()
+
+    return {
+      code: 200,
+      message: `Se movieron ${movimientosHuerfanos.length} flujos. Saldos sincronizados.`,
+      detalles: {
+        cajaVieja: nuevoSaldoVieja,
+        cajaNueva: nuevoSaldoNueva,
+      },
+    }
+  } catch (error) {
+    if (t) await t.rollback()
+    console.error('CRITICAL ERROR EN CORRECCIÓN:', error)
+    throw error
+  }
+}
 export {
   cerrarCaja,
+  corregirDescuadre,
   reAperturarCaja,
   registrarInyeccionBanco,
   registrarVentaRapida,

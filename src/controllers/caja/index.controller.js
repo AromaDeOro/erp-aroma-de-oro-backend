@@ -7,6 +7,7 @@ import {
 import { abrirCaja } from './post.controller.js'
 import {
   cerrarCaja,
+  corregirDescuadre,
   postInyeccionBanco,
   reAperturarCaja,
   registrarVentaRapida,
@@ -24,4 +25,5 @@ export default {
   registrarVentaRapida,
   reAperturarCaja,
   updateDataCaja,
+  corregirDescuadre,
 }
