@@ -355,25 +355,22 @@ const corregirDescuadre = async (CajaIdErronea) => {
       ]
 
       for (const item of modelos) {
+        // Definimos qué campo de monto usar según el modelo
+        // En tu modelo de Ventas es 'montoAbonado', en Gastos/Anticipos es 'monto'
+        const campoMontoDestino = item.mdl.name === 'Venta' ? 'montoAbonado' : 'monto'
+
         await item.mdl.update(
           { CajaId: cajaNueva.id },
           {
             where: {
               CajaId: cajaVieja.id,
-              // Matcheo por monto (o monto abonado en ventas) y cercanía de tiempo
-              [Op.and]: [
-                {
-                  [Op.or]: [{ monto: mov.monto }, { montoAbonado: mov.monto }],
-                },
-                {
-                  [item.campoFecha]: {
-                    [Op.between]: [
-                      new Date(new Date(mov.fecha).getTime() - 30000), // -30 seg
-                      new Date(new Date(mov.fecha).getTime() + 30000), // +30 seg
-                    ],
-                  },
-                },
-              ],
+              [campoMontoDestino]: mov.monto, // Comparamos con el monto del movimiento
+              [item.campoFecha]: {
+                [Op.between]: [
+                  new Date(new Date(mov.fecha).getTime() - 60000), // Margen de 1 min
+                  new Date(new Date(mov.fecha).getTime() + 60000),
+                ],
+              },
             },
             transaction: t,
           }
